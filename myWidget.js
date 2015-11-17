@@ -21,6 +21,7 @@ function myWidget(viewer,scene,ellipsoid)
 	this.zoomRate = this.getcamera().carto.height/100;
 	this.clickZoomIn = clickZoomIn;
 	this.clickZoomOut = clickZoomOut;
+	this.getExtent = getExtent;
 }
 	//经纬度高度获取
 	function movePick()
@@ -81,7 +82,7 @@ function myWidget(viewer,scene,ellipsoid)
 			var cameraheight0 = this.getcamera().carto.height;
 			this.zoomRate = cameraheight0/100;
 			var cameraheight = cameraheight0.toFixed(0);
-			console.log(this.zoomRate);
+			//console.log(this.zoomRate);
 			document.getElementById("viewheight").innerHTML="    \t视角高度: "+cameraheight+'米';
 		}, Cesium.ScreenSpaceEventType.WHEEL);
 		
@@ -279,7 +280,15 @@ function myWidget(viewer,scene,ellipsoid)
 				});
 			});
 		
+		var viewchanged;
+		this.viewer.camera.moveStart.addEventListener(function() {
+			viewchanged=true;
+		});
 
+		this.viewer.camera.moveEnd.addEventListener(function() {
+			viewchanged=false;
+		});
+		
 		this.viewer.clock.onTick.addEventListener(function(clock) {
 			var heading = camera.heading;
 			if (looking) {
@@ -313,6 +322,10 @@ function myWidget(viewer,scene,ellipsoid)
 			//console.log(homeview.destination);
 			//console.log(roll/Math.PI*180);
 			
+			if(viewchanged)
+			{
+				this.getExtent();
+			}
 		});
 	}
 	
@@ -403,4 +416,65 @@ function myWidget(viewer,scene,ellipsoid)
 		viewer.camera.zoomOut(this.zoomRate);
 		var cameraheight0 = this.getcamera().carto.height;
 		this.zoomRate = cameraheight0/100;
+	}
+	
+	function getExtent()
+	{
+		var leftup = new Cesium.Cartesian2(0, 0);
+		var rightdown = new Cesium.Cartesian2(this.scene.canvas.width, this.scene.canvas.height);
+		
+		var start = this.scene.camera.pickEllipsoid(leftup, this.ellipsoid);
+		var end = this.scene.camera.pickEllipsoid(rightdown, this.ellipsoid);
+		//console.log(start);
+		if (start&&end) {
+			start = this.ellipsoid.cartesianToCartographic(start);
+			end = this.ellipsoid.cartesianToCartographic(end);
+			var extent = new Cesium.Rectangle(start.longitude, end.latitude, end.longitude, start.latitude);
+			console.log(extent);
+			return extent;
+		} else if(!start&&!end) console.log("Whole Extent");
+		else
+		{//The sky is visible in 3D
+			console.log("Sky is visible");
+			// Translate coordinates
+			var x1 = leftup.x;
+			var y1 = leftup.y;
+			var x2 = rightdown.x;
+			var y2 = rightdown.y;
+			// Define differences and error check
+			var dx = Math.abs(x2 - x1);
+			var dy = Math.abs(y2 - y1);
+			var sx = (x1 < x2) ? 1 : -1;
+			var sy = (y1 < y2) ? 1 : -1;
+			var err = dx - dy;
+			
+			// start = scene.camera.pickEllipsoid({x:x1, y:y1}, this.ellipsoid);
+			// if(coordinate) {
+				// return coordinate;
+			// }
+			
+			// Main loop
+			while (!((x1 == x2) && (y1 == y2))) {
+			  var e2 = err << 1;
+			  if (e2 > -dy) {
+				err -= dy;
+				x1 += sx;
+			  }
+			  if (e2 < dx) {
+				err += dx;
+				y1 += sy;
+			  }
+			  
+			  start = scene.camera.pickEllipsoid({x:x1, y:y1}, this.ellipsoid);
+				if(start) {
+					start = this.ellipsoid.cartesianToCartographic(start);
+					end = this.ellipsoid.cartesianToCartographic(end);
+					var extent = new Cesium.Rectangle(start.longitude, end.latitude, end.longitude, start.latitude);
+					console.log(extent);
+					return extent;
+				}
+			}
+			return null;
+		}
+		
 	}
