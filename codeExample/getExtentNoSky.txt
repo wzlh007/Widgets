@@ -1,0 +1,49 @@
+Hi Prem,
+
+I used the following code to traverse from canvas corners. For example calculating leftTop, traversing from lefttop to rightdown, i have given findCoordinate(new Cesium.Cartesian2(0,0), new Cesium.Cartesian2(canvasWidth, canvasHeight)), same way you can calculate other corners by providing appropraite values. Hope it helps you.
+
+function (startCoordinates, endCoordinates) {
+			
+			var coordinate = scene.camera.pickEllipsoid(startCoordinates, this.ellipsoid);
+			
+		    // Translate coordinates
+		    var x1 = startCoordinates.x;
+		    var y1 = startCoordinates.y;
+		    var x2 = endCoordinates.x;
+		    var y2 = endCoordinates.y;
+		    // Define differences and error check
+		    var dx = Math.abs(x2 - x1);
+		    var dy = Math.abs(y2 - y1);
+		    var sx = (x1 < x2) ? 1 : -1;
+		    var sy = (y1 < y2) ? 1 : -1;
+		    var err = dx - dy;
+		    
+		    coordinate = scene.camera.pickEllipsoid({x:x1, y:y1}, this.ellipsoid);
+		    if(coordinate) {
+		    	return coordinate;
+		    }
+		    
+		    // Main loop
+		    while (!((x1 == x2) && (y1 == y2))) {
+		      var e2 = err << 1;
+		      if (e2 > -dy) {
+		        err -= dy;
+		        x1 += sx;
+		      }
+		      if (e2 < dx) {
+		        err += dx;
+		        y1 += sy;
+		      }
+		      
+		      coordinate = scene.camera.pickEllipsoid({x:x1, y:y1}, this.ellipsoid);
+				if(coordinate) {
+					return coordinate;
+				}
+		    }
+		    return;
+		},
+
+
+
+Thanks,
+Raghu.

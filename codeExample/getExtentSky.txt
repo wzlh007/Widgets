@@ -1,0 +1,29 @@
+Hi Willem,
+
+Thanks for the response and sorry for delay in reply.
+
+I've modified the code based on your suggestion. It works well, when the sky is not visible. I also want to get the position when the sky is visible. 
+
+
+function getExtentView() {
+    var cl2 = new Cesium.Cartesian2(0, 0);
+    var leftTop = viewer.scene.camera.pickEllipsoid(cl2, ellipsoid);
+
+    cr2 = new Cesium.Cartesian2(viewer.scene.canvas.width, viewer.scene.canvas.height);
+    var rightDown = viewer.scene.camera.pickEllipsoid(cr2, ellipsoid);
+
+    if (leftTop != null && rightDown != null) {
+        leftTop = ellipsoid.cartesianToCartographic(leftTop);
+        rightDown = ellipsoid.cartesianToCartographic(rightDown);
+        return new Cesium.Rectangle(leftTop.longitude, rightDown.latitude, rightDown.longitude, leftTop.latitude);
+    } else {//The sky is visible in 3D
+        console.log("Sky is visible");
+        return null;
+    }
+}
+
+I've also tried the suggestion given in the post(#871), but no luck :(
+
+Can you please help to sort it out!
+
+Thanks in advance.
