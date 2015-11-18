@@ -24,10 +24,12 @@
 	var scene = viewer.scene;
 	var ellipsoid = scene.globe.ellipsoid;
 	var myWidget = new myWidget(viewer,scene,ellipsoid);
+	myWidget.drawGrid();
 	myWidget.movePick();
 	myWidget.showScalebar();
 	myWidget.doCompass();
 	myWidget.doNavi();
+	
   </script>
 </body>
 </html>
