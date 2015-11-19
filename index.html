@@ -10,7 +10,7 @@
   <title>Hello World!</title>
   <script src="Cesium/Cesium.js"></script>
   <script src="myWidget.js"></script>
-  <script src="Graticule.js"></script>
+<!--   <script src="Graticule.js"></script> -->
   <style>
       @import url(Cesium/Widgets/widgets.css);
       html, body, #cesiumContainer {
@@ -30,15 +30,16 @@
 	myWidget.showScalebar();
 	myWidget.doCompass();
 	myWidget.doNavi();
+	myWidget.drawGraticule();
 	//myWidget.drawSpecLines();
 	
-	var graticule = new Graticule({
-            tileWidth: 512,
-            tileHeight: 512,
-            numLines: 10,
-        }, scene);
-	viewer.scene.imageryLayers.addImageryProvider(graticule);
-	graticule.setVisible(true);
+	//var graticule = new Graticule({
+    //        tileWidth: 512,
+    //        tileHeight: 512,
+    //        numLines: 10,
+    //    }, scene);
+	//viewer.scene.imageryLayers.addImageryProvider(graticule);
+	//graticule.setVisible(true);
   </script>
 </body>
 </html>
