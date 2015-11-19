@@ -38,7 +38,11 @@ var Graticule = (function() {
         this._labels = new Cesium.LabelCollection();
         scene.primitives.add(this._labels);
         this._polylines = new Cesium.PolylineCollection();
+		this._specLines = new Cesium.PolylineCollection();
+		//console.log('start');
         scene.primitives.add(this._polylines);
+        scene.primitives.add(this._specLines);
+		//console.log('end');
         this._ellipsoid = scene.globe.ellipsoid;
 
         var canvas = document.createElement('canvas');
@@ -161,6 +165,21 @@ var Graticule = (function() {
             scale : 1.0
         });
     };
+	_.prototype.makeLabel4Spec = function(lng, lat, text, top, color) {
+        this._labels.add({
+            position : this._ellipsoid.cartographicToCartesian(new Cesium.Cartographic(lng, lat, 10.0)),
+            text : text,
+            font : '15px 微软雅黑',
+            fillColor : Cesium.Color.WHITE,
+            //outlineColor : 'white',
+            //style : Cesium.LabelStyle.FILL,
+            pixelOffset : new Cesium.Cartesian2(5, top ? 15 : -15),
+            eyeOffset : Cesium.Cartesian3.ZERO,
+            horizontalOrigin : Cesium.HorizontalOrigin.LEFT,
+            verticalOrigin : top ? Cesium.VerticalOrigin.BOTTOM : Cesium.VerticalOrigin.TOP,
+            scale : 1.0
+        });
+    };
 
     _.prototype._drawGrid = function(extent) {
 
@@ -170,6 +189,7 @@ var Graticule = (function() {
         this._currentExtent = extent;
 
         this._polylines.removeAll();
+        this._specLines.removeAll();
         this._labels.removeAll();
 
         var minPixel = 0;
@@ -215,7 +235,7 @@ var Graticule = (function() {
             var degLng = Cesium.Math.toDegrees(lng);
             this.makeLabel(lng, latitudeText, this._sexagesimal ? this._decToSex(degLng) : degreeToText(degLng,dLng,'lon'), false);
         }
-
+		
         // lats
         var longitudeText = minLng + Math.floor((maxLng - minLng) / dLng / 2) * dLng;
         for(lat = minLat; lat < maxLat; lat += dLat) {
@@ -227,11 +247,33 @@ var Graticule = (function() {
             path.push(new Cesium.Cartographic(maxLng, lat));
             this._polylines.add({
                 positions : ellipsoid.cartographicArrayToCartesianArray(path),
-                width: 1
+                width: 1,
             });
             var degLat = Cesium.Math.toDegrees(lat);
             this.makeLabel(longitudeText, lat, this._sexagesimal ? this._decToSex(degLat) : degreeToText(degLat,dLat,'lat'), true);
         }
+		//特殊经纬线
+		
+		
+		//console.log('mark');
+		for(var i=0;i<specLines.length;i++)
+		{
+			//为什么material要加在循环里面才不会报错，否则会说object destroy？
+			var material = Cesium.Material.fromType('Color', {
+				color : new Cesium.Color(1.0, 1.0, 0.0, 1.0)
+			});
+			var path = [];
+			for(lng = minLng; lng < maxLng; lng += granularity) {
+				path.push(new Cesium.Cartographic(lng, Cesium.Math.toRadians(specLines[i])));
+			}
+			path.push(new Cesium.Cartographic(maxLng, Cesium.Math.toRadians(specLines[i])));
+			this._specLines.add({
+				positions : ellipsoid.cartographicArrayToCartesianArray(path),
+				material : material,
+				width: 2,
+			});
+			this.makeLabel(Cesium.Math.toRadians(90), Cesium.Math.toRadians(specLines[i]), 'haha', true);
+		}
     };
 
     _.prototype.requestImage = function(x, y, level) {
@@ -281,7 +323,7 @@ var Graticule = (function() {
         }
         return Cesium.Rectangle.fromCartographicArray(this._ellipsoid.cartesianArrayToCartographicArray(corners));
     }
-
+	
     function gridPrecision(dDeg) {
         if (dDeg < 0.01) return 3;
         if (dDeg < 0.1) return 2;
@@ -318,11 +360,14 @@ var Graticule = (function() {
         Cesium.Math.toRadians(10.0)
     ];
 
+	var specLines = [66.5,23.5,0,-23.5,-66.5];
+	
     function loggingMessage(message) {
         var logging = document.getElementById('logging');
         logging.innerHTML += message;
     }
-
+	
+	
     return _;
 
 })();

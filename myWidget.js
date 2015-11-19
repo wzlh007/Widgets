@@ -24,6 +24,7 @@ function myWidget(viewer,scene,ellipsoid)
 	this.getExtent = getExtent;
 	this.drawExtent = drawExtent;
 	this.drawGrid = drawGrid;
+	this.drawSpecLines = drawSpecLines;
 }
 	//经纬度高度获取
 	function movePick()
@@ -326,7 +327,7 @@ function myWidget(viewer,scene,ellipsoid)
 			
 			if(viewchanged)
 			{
-				var extent = this.getExtent();
+				//var extent = this.getExtent();
 				//this.drawExtent(extent);
 			}
 		});
@@ -421,6 +422,7 @@ function myWidget(viewer,scene,ellipsoid)
 		this.zoomRate = cameraheight0/100;
 	}
 	
+	//无用
 	function getExtent()
 	{
 		var leftup = new Cesium.Cartesian2(0, 0);
@@ -519,6 +521,7 @@ function myWidget(viewer,scene,ellipsoid)
 		
 	}
 	
+	//无用
 	function drawExtent(extent)
 	{
 		// var rectangle = new Cesium.RectangleGeometry({
@@ -534,6 +537,8 @@ function myWidget(viewer,scene,ellipsoid)
 		console.log(RectanglePrimitive);
 		return RectanglePrimitive;
 	}
+	
+	//无用
 	function drawGrid()
 	{
 		for(var i=0;i<1;i++)
@@ -562,5 +567,27 @@ function myWidget(viewer,scene,ellipsoid)
 					});
 				}
 			}
+		}
+	}
+	//赤道，南北回归线，南北纬，//无用
+	function drawSpecLines()
+	{
+		console.log('start');
+		var specLines = [66.5,23.5,0,-23.5,-66.5];
+		var add = 10;
+		console.log(specLines[1]);
+		for(var i=0;i<specLines.length;i++)
+		{
+			for(var j=-180;j<180;j+=add)
+			var line = this.viewer.entities.add({
+				//name : 'Red line on the surface',
+				polyline : {
+					positions : Cesium.Cartesian3.fromDegreesArray([0, specLines[i],
+																	j+add, specLines[i]]),
+					//width : 5,
+					material : Cesium.Color.RED
+				}
+			});
+			console.log(line);
 		}
 	}
