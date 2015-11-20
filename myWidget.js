@@ -801,9 +801,9 @@ var Graticule = (function() {
             dLng = mins[index];
         }
 		//判断extent是否横跨180经线
-		if((extent.east - extent.west)>Math.PI)
+		if(extent.east>0&&extent.east<Math.PI&&extent.west<0&&extent.west>-Math.PI)
 		{
-			console.log(extent.west,extent.east);
+			console.log(1,Cesium.Math.toDegrees(extent.west),Cesium.Math.toDegrees(extent.east));
 			var minLng = (extent.east < 0 ? Math.ceil(extent.east / dLng) : Math.floor(extent.east / dLng)) * dLng;
 			var minLat = (extent.south < 0 ? Math.ceil(extent.south / dLat) : Math.floor(extent.south / dLat)) * dLat;
 			var maxLng = (extent.west < 0 ? Math.ceil(extent.west / dLng) : Math.floor(extent.west / dLng)) * dLng;    
@@ -826,7 +826,7 @@ var Graticule = (function() {
 				var degLng = Cesium.Math.toDegrees(lng);
 				this.makeLabel(lng, latitudeText, this._sexagesimal ? this._decToSex(degLng) : degreeToText(degLng,dLng,'lon'), false);
 			}
-			for(lng = Cesium.Math.toRadians(180); lng <maxLng ; lng += dLng) {
+			for(lng = Cesium.Math.toRadians(-180); lng <maxLng ; lng += dLng) {
 				// draw meridian
 				var path = [];
 				for(lat = minLat; lat < maxLat; lat += granularity) {
@@ -840,8 +840,29 @@ var Graticule = (function() {
 				var degLng = Cesium.Math.toDegrees(lng);
 				this.makeLabel(lng, latitudeText, this._sexagesimal ? this._decToSex(degLng) : degreeToText(degLng,dLng,'lon'), false);
 			}
+			
+			var longitudeText = minLng + Math.floor((maxLng - minLng) / dLng / 2) * dLng;
+			for(lat = minLat; lat < maxLat; lat += dLat) {
+				// draw parallels
+				var path = [];
+				for(lng = minLng; lng < Cesium.Math.toRadians(180); lng += granularity) {
+					path.push(new Cesium.Cartographic(lng, lat))
+				}				
+				for(lng = Cesium.Math.toRadians(-180); lng < maxLng; lng += granularity) {
+					path.push(new Cesium.Cartographic(lng, lat))
+				}
+				path.push(new Cesium.Cartographic(maxLng, lat));
+				this._polylines.add({
+					positions : ellipsoid.cartographicArrayToCartesianArray(path),
+					width: 1,
+				});
+				var degLat = Cesium.Math.toDegrees(lat);
+				this.makeLabel(longitudeText, lat, this._sexagesimal ? this._decToSex(degLat) : degreeToText(degLat,dLat,'lat'), true);
+			}
+			
 		}
 		else{
+			console.log(2,Cesium.Math.toDegrees(extent.west),Cesium.Math.toDegrees(extent.east));
         // round iteration limits to the computed grid interval
         var minLng = (extent.west < 0 ? Math.ceil(extent.west / dLng) : Math.floor(extent.west / dLng)) * dLng;
         var minLat = (extent.south < 0 ? Math.ceil(extent.south / dLat) : Math.floor(extent.south / dLat)) * dLat;
