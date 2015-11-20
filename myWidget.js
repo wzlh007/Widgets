@@ -797,8 +797,10 @@ var Graticule = (function() {
         for(index = 0; index < mins.length && dLat < ((extent.north - extent.south) / 10); index++) {
             dLat = mins[index];
         }
+		console.log(0,Cesium.Math.toDegrees(extent.west),Cesium.Math.toDegrees(extent.east))
 		//判断extent是否横跨180经线
-		if(extent.east>Math.PI/2&&extent.east<Math.PI&&extent.west<-Math.PI/2&&extent.west>-Math.PI)
+		if(extent.east>(Math.PI/2) && extent.east<Math.PI && extent.west<(-Math.PI/2) && extent.west>-Math.PI)
+		//if( east_west > Cesium.Math.PI/2)
 		{
 			for(index = 0; index < mins.length && dLng < ((Math.PI*2 - extent.east + extent.west) / 10); index++) {
 				dLng = mins[index];
@@ -813,7 +815,8 @@ var Graticule = (function() {
 			minLng = Math.max(minLng - 2 * dLng, -Math.PI);
 			maxLng = Math.min(maxLng + 2 * dLng, Math.PI);
 			minLat = Math.max(minLat - 2 * dLat, -Math.PI / 2);
-			maxLat = Math.min(maxLat + 2 * dLng, Math.PI / 2);
+			maxLat = Math.min(maxLat + 2 * dLat, Math.PI / 2);
+			console.log(1,Cesium.Math.toDegrees(minLng),Cesium.Math.toDegrees(maxLng),Cesium.Math.toDegrees(dLng));
 			
 			var ellipsoid = this._ellipsoid;
 			var lat, lng, granularity = Cesium.Math.toRadians(1);
@@ -908,8 +911,8 @@ var Graticule = (function() {
 			minLng = Math.max(minLng - 2 * dLng, -Math.PI);
 			maxLng = Math.min(maxLng + 2 * dLng, Math.PI);
 			minLat = Math.max(minLat - 2 * dLat, -Math.PI / 2);
-			maxLat = Math.min(maxLat + 2 * dLng, Math.PI / 2);
-
+			maxLat = Math.min(maxLat + 2 * dLat, Math.PI / 2);
+			console.log(2,Cesium.Math.toDegrees(minLng),Cesium.Math.toDegrees(maxLng),Cesium.Math.toDegrees(dLng));
 			var ellipsoid = this._ellipsoid;
 			var lat, lng, granularity = Cesium.Math.toRadians(1);
 
