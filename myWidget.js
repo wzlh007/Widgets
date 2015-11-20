@@ -800,7 +800,48 @@ var Graticule = (function() {
         for(index = 0; index < mins.length && dLng < ((extent.east - extent.west) / 10); index++) {
             dLng = mins[index];
         }
-
+		//判断extent是否横跨180经线
+		if((extent.east - extent.west)>Math.PI)
+		{
+			console.log(extent.west,extent.east);
+			var minLng = (extent.east < 0 ? Math.ceil(extent.east / dLng) : Math.floor(extent.east / dLng)) * dLng;
+			var minLat = (extent.south < 0 ? Math.ceil(extent.south / dLat) : Math.floor(extent.south / dLat)) * dLat;
+			var maxLng = (extent.west < 0 ? Math.ceil(extent.west / dLng) : Math.floor(extent.west / dLng)) * dLng;    
+			var maxLat = (extent.north < 0 ? Math.ceil(extent.north / dLat) : Math.floor(extent.north / dLat)) * dLat;
+			var ellipsoid = this._ellipsoid;
+			var lat, lng, granularity = Cesium.Math.toRadians(1);
+			
+			var latitudeText = minLat + Math.floor((maxLat - minLat) / dLat / 2) * dLat;
+			for(lng = minLng; lng < Cesium.Math.toRadians(180); lng += dLng) {
+				// draw meridian
+				var path = [];
+				for(lat = minLat; lat < maxLat; lat += granularity) {
+					path.push(new Cesium.Cartographic(lng, lat))
+				}
+				path.push(new Cesium.Cartographic(lng, maxLat));
+				this._polylines.add({
+					positions : ellipsoid.cartographicArrayToCartesianArray(path),
+					width: 1
+				});
+				var degLng = Cesium.Math.toDegrees(lng);
+				this.makeLabel(lng, latitudeText, this._sexagesimal ? this._decToSex(degLng) : degreeToText(degLng,dLng,'lon'), false);
+			}
+			for(lng = Cesium.Math.toRadians(180); lng <maxLng ; lng += dLng) {
+				// draw meridian
+				var path = [];
+				for(lat = minLat; lat < maxLat; lat += granularity) {
+					path.push(new Cesium.Cartographic(lng, lat))
+				}
+				path.push(new Cesium.Cartographic(lng, maxLat));
+				this._polylines.add({
+					positions : ellipsoid.cartographicArrayToCartesianArray(path),
+					width: 1
+				});
+				var degLng = Cesium.Math.toDegrees(lng);
+				this.makeLabel(lng, latitudeText, this._sexagesimal ? this._decToSex(degLng) : degreeToText(degLng,dLng,'lon'), false);
+			}
+		}
+		else{
         // round iteration limits to the computed grid interval
         var minLng = (extent.west < 0 ? Math.ceil(extent.west / dLng) : Math.floor(extent.west / dLng)) * dLng;
         var minLat = (extent.south < 0 ? Math.ceil(extent.south / dLat) : Math.floor(extent.south / dLat)) * dLat;
@@ -871,7 +912,7 @@ var Graticule = (function() {
 			});
 			this.makeLabel4Spec((minLng+maxLng)/2-granularity, Cesium.Math.toRadians(specLines[i]), i, true);
 		}
-		
+		}
     };
 
     _.prototype.requestImage = function(x, y, level) {
