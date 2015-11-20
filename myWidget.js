@@ -636,9 +636,12 @@ var Graticule = (function() {
         scene.primitives.add(this._labels);
         this._polylines = new Cesium.PolylineCollection();
 		this._specLines = new Cesium.PolylineCollection();
+		this._baseLines = new Cesium.PolylineCollection();
+		
 		//console.log('start');
         scene.primitives.add(this._polylines);
         scene.primitives.add(this._specLines);
+        scene.primitives.add(this._baseLines);
 		//console.log('end');
         this._ellipsoid = scene.globe.ellipsoid;
 
@@ -787,6 +790,7 @@ var Graticule = (function() {
 
         this._polylines.removeAll();
         this._specLines.removeAll();
+        this._baseLines.removeAll();
         this._labels.removeAll();
 
         var minPixel = 0;
@@ -794,49 +798,7 @@ var Graticule = (function() {
 
         var dLat = 0, dLng = 0, index;
 		
-		//绘制基础经纬网start
-		var ellipsoid = this._ellipsoid;
-		var lat, lng, granularity = Cesium.Math.toRadians(1);
-		dLat = Cesium.Math.toRadians(10.0);
-		dLng = Cesium.Math.toRadians(10.0);
-		var minLat = -Math.PI/2;
-		var maxLat = Math.PI/2;
-		var minLng = -Math.PI;
-		var maxLng = Math.PI;
-		// labels positions
-		var latitudeText = minLat + Math.floor((maxLat - minLat) / dLat / 2) * dLat;
-		for(lng = minLng; lng < maxLng; lng += dLng) {
-			// draw meridian
-			var path = [];
-			for(lat = minLat; lat < maxLat; lat += granularity) {
-				path.push(new Cesium.Cartographic(lng, lat))
-			}
-			path.push(new Cesium.Cartographic(lng, maxLat));
-			this._polylines.add({
-				positions : ellipsoid.cartographicArrayToCartesianArray(path),
-				width: 1
-			});
-			var degLng = Cesium.Math.toDegrees(lng);
-			//this.makeLabel(lng, latitudeText, this._sexagesimal ? this._decToSex(degLng) : degreeToText(degLng,dLng,'lon'), false);
-		}
 		
-		// lats
-		var longitudeText = minLng + Math.floor((maxLng - minLng) / dLng / 2) * dLng;
-		for(lat = minLat; lat < maxLat; lat += dLat) {
-			// draw parallels
-			var path = [];
-			for(lng = minLng; lng < maxLng; lng += granularity) {
-				path.push(new Cesium.Cartographic(lng, lat))
-			}
-			path.push(new Cesium.Cartographic(maxLng, lat));
-			this._polylines.add({
-				positions : ellipsoid.cartographicArrayToCartesianArray(path),
-				width: 1,
-			});
-			var degLat = Cesium.Math.toDegrees(lat);
-			//this.makeLabel(longitudeText, lat, this._sexagesimal ? this._decToSex(degLat) : degreeToText(degLat,dLat,'lat'), true);
-		}
-		//绘制基础经纬网end
 		
         // get the nearest to the calculated value
         for(index = 0; index < mins.length && dLat < ((extent.north - extent.south) / 10); index++) {
@@ -1015,6 +977,50 @@ var Graticule = (function() {
 				this.makeLabel4Spec((minLng+maxLng)/2-granularity, Cesium.Math.toRadians(specLines[i]), i, true);
 			}
 		}
+		
+		//绘制基础经纬网start
+		var ellipsoid = this._ellipsoid;
+		var lat, lng, granularity = Cesium.Math.toRadians(1);
+		dLat = Cesium.Math.toRadians(10.0);
+		dLng = Cesium.Math.toRadians(10.0);
+		var minLat = -Math.PI/2;
+		var maxLat = Math.PI/2;
+		var minLng = -Math.PI;
+		var maxLng = Math.PI;
+		// labels positions
+		var latitudeText = minLat + Math.floor((maxLat - minLat) / dLat / 2) * dLat;
+		for(lng = minLng; lng < maxLng; lng += dLng) {
+			// draw meridian
+			var path = [];
+			for(lat = minLat; lat < maxLat; lat += granularity) {
+				path.push(new Cesium.Cartographic(lng, lat))
+			}
+			path.push(new Cesium.Cartographic(lng, maxLat));
+			this._baseLines.add({
+				positions : ellipsoid.cartographicArrayToCartesianArray(path),
+				width: 1
+			});
+			var degLng = Cesium.Math.toDegrees(lng);
+			//this.makeLabel(lng, latitudeText, this._sexagesimal ? this._decToSex(degLng) : degreeToText(degLng,dLng,'lon'), false);
+		}
+		
+		// lats
+		var longitudeText = minLng + Math.floor((maxLng - minLng) / dLng / 2) * dLng;
+		for(lat = minLat; lat < maxLat; lat += dLat) {
+			// draw parallels
+			var path = [];
+			for(lng = minLng; lng < maxLng; lng += granularity) {
+				path.push(new Cesium.Cartographic(lng, lat))
+			}
+			path.push(new Cesium.Cartographic(maxLng, lat));
+			this._baseLines.add({
+				positions : ellipsoid.cartographicArrayToCartesianArray(path),
+				width: 1,
+			});
+			var degLat = Cesium.Math.toDegrees(lat);
+			//this.makeLabel(longitudeText, lat, this._sexagesimal ? this._decToSex(degLat) : degreeToText(degLat,dLat,'lat'), true);
+		}
+		//绘制基础经纬网end
     };
 
     _.prototype.requestImage = function(x, y, level) {
@@ -1031,6 +1037,7 @@ var Graticule = (function() {
         if(!visible) {
             this._polylines.removeAll();
 			this._specLines.removeAll();
+			this._baseLines.removeAll();
             this._labels.removeAll();
         } else {
             this._currentExtent = null;
