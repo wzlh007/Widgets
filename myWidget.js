@@ -797,20 +797,28 @@ var Graticule = (function() {
         for(index = 0; index < mins.length && dLat < ((extent.north - extent.south) / 10); index++) {
             dLat = mins[index];
         }
-        for(index = 0; index < mins.length && dLng < ((extent.east - extent.west) / 10); index++) {
-            dLng = mins[index];
-        }
 		//判断extent是否横跨180经线
-		if(extent.east>0&&extent.east<Math.PI&&extent.west<0&&extent.west>-Math.PI)
+		if(extent.east>Math.PI/2&&extent.east<Math.PI&&extent.west<-Math.PI/2&&extent.west>-Math.PI)
 		{
+			for(index = 0; index < mins.length && dLng < ((Math.PI*2 - extent.east + extent.west) / 10); index++) {
+				dLng = mins[index];
+			}
 			console.log(1,Cesium.Math.toDegrees(extent.west),Cesium.Math.toDegrees(extent.east));
 			var minLng = (extent.east < 0 ? Math.ceil(extent.east / dLng) : Math.floor(extent.east / dLng)) * dLng;
 			var minLat = (extent.south < 0 ? Math.ceil(extent.south / dLat) : Math.floor(extent.south / dLat)) * dLat;
 			var maxLng = (extent.west < 0 ? Math.ceil(extent.west / dLng) : Math.floor(extent.west / dLng)) * dLng;    
 			var maxLat = (extent.north < 0 ? Math.ceil(extent.north / dLat) : Math.floor(extent.north / dLat)) * dLat;
+			
+			// extend to make sure we cover for non refresh of tiles
+			minLng = Math.max(minLng - 2 * dLng, -Math.PI);
+			maxLng = Math.min(maxLng + 2 * dLng, Math.PI);
+			minLat = Math.max(minLat - 2 * dLat, -Math.PI / 2);
+			maxLat = Math.min(maxLat + 2 * dLng, Math.PI / 2);
+			
 			var ellipsoid = this._ellipsoid;
 			var lat, lng, granularity = Cesium.Math.toRadians(1);
 			
+			//画经线
 			var latitudeText = minLat + Math.floor((maxLat - minLat) / dLat / 2) * dLat;
 			for(lng = minLng; lng < Cesium.Math.toRadians(180); lng += dLng) {
 				// draw meridian
@@ -840,8 +848,9 @@ var Graticule = (function() {
 				var degLng = Cesium.Math.toDegrees(lng);
 				this.makeLabel(lng, latitudeText, this._sexagesimal ? this._decToSex(degLng) : degreeToText(degLng,dLng,'lon'), false);
 			}
-			
-			var longitudeText = minLng + Math.floor((maxLng - minLng) / dLng / 2) * dLng;
+			//画纬线
+			var longitudeText = minLng + Math.floor((Math.PI*2+(maxLng - minLng)) / dLng / 2) * dLng;
+			var longitudeText = longitudeText<Math.PI ? longitudeText : (-Math.PI+longitudeText-Math.PI);
 			for(lat = minLat; lat < maxLat; lat += dLat) {
 				// draw parallels
 				var path = [];
@@ -858,81 +867,105 @@ var Graticule = (function() {
 				});
 				var degLat = Cesium.Math.toDegrees(lat);
 				this.makeLabel(longitudeText, lat, this._sexagesimal ? this._decToSex(degLat) : degreeToText(degLat,dLat,'lat'), true);
+				//console.log(Cesium.Math.toDegrees(longitudeText));
 			}
 			
+			//特殊经纬线
+			for(i in specLines)
+			{
+				//为什么material要加在循环里面才不会报错，否则会说object destroy？
+				var material = Cesium.Material.fromType('Color', {
+					color : new Cesium.Color(1.0, 1.0, 0.0, 1.0)
+				});
+				var path = [];
+				for(lng = minLng; lng < Cesium.Math.toRadians(180); lng += granularity) {
+					path.push(new Cesium.Cartographic(lng, Cesium.Math.toRadians(specLines[i])));
+				}				
+				for(lng = Cesium.Math.toRadians(-180); lng < maxLng; lng += granularity) {
+					path.push(new Cesium.Cartographic(lng, Cesium.Math.toRadians(specLines[i])));
+				}
+				path.push(new Cesium.Cartographic(maxLng, Cesium.Math.toRadians(specLines[i])));
+				this._specLines.add({
+					positions : ellipsoid.cartographicArrayToCartesianArray(path),
+					material : material,
+					width: 2,
+				});
+				this.makeLabel4Spec(longitudeText+dLng, Cesium.Math.toRadians(specLines[i]), i, true);
+			}
 		}
 		else{
-			console.log(2,Cesium.Math.toDegrees(extent.west),Cesium.Math.toDegrees(extent.east));
-        // round iteration limits to the computed grid interval
-        var minLng = (extent.west < 0 ? Math.ceil(extent.west / dLng) : Math.floor(extent.west / dLng)) * dLng;
-        var minLat = (extent.south < 0 ? Math.ceil(extent.south / dLat) : Math.floor(extent.south / dLat)) * dLat;
-        var maxLng = (extent.east < 0 ? Math.ceil(extent.east / dLng) : Math.floor(extent.east / dLng)) * dLng;    //原来这两行dling和dlat写反了，已经改回来了
-        var maxLat = (extent.north < 0 ? Math.ceil(extent.north / dLat) : Math.floor(extent.north / dLat)) * dLat;
-
-        // extend to make sure we cover for non refresh of tiles
-        minLng = Math.max(minLng - 2 * dLng, -Math.PI);
-        maxLng = Math.min(maxLng + 2 * dLng, Math.PI);
-        minLat = Math.max(minLat - 2 * dLat, -Math.PI / 2);
-        maxLat = Math.min(maxLat + 2 * dLng, Math.PI / 2);
-
-        var ellipsoid = this._ellipsoid;
-        var lat, lng, granularity = Cesium.Math.toRadians(1);
-
-        // labels positions
-        var latitudeText = minLat + Math.floor((maxLat - minLat) / dLat / 2) * dLat;
-        for(lng = minLng; lng < maxLng; lng += dLng) {
-            // draw meridian
-            var path = [];
-            for(lat = minLat; lat < maxLat; lat += granularity) {
-                path.push(new Cesium.Cartographic(lng, lat))
-            }
-            path.push(new Cesium.Cartographic(lng, maxLat));
-            this._polylines.add({
-                positions : ellipsoid.cartographicArrayToCartesianArray(path),
-                width: 1
-            });
-            var degLng = Cesium.Math.toDegrees(lng);
-            this.makeLabel(lng, latitudeText, this._sexagesimal ? this._decToSex(degLng) : degreeToText(degLng,dLng,'lon'), false);
-        }
-		
-        // lats
-        var longitudeText = minLng + Math.floor((maxLng - minLng) / dLng / 2) * dLng;
-        for(lat = minLat; lat < maxLat; lat += dLat) {
-            // draw parallels
-            var path = [];
-            for(lng = minLng; lng < maxLng; lng += granularity) {
-                path.push(new Cesium.Cartographic(lng, lat))
-            }
-            path.push(new Cesium.Cartographic(maxLng, lat));
-            this._polylines.add({
-                positions : ellipsoid.cartographicArrayToCartesianArray(path),
-                width: 1,
-            });
-            var degLat = Cesium.Math.toDegrees(lat);
-            this.makeLabel(longitudeText, lat, this._sexagesimal ? this._decToSex(degLat) : degreeToText(degLat,dLat,'lat'), true);
-        }
-		//特殊经纬线
-		
-		
-		//console.log('mark');
-		for(i in specLines)
-		{
-			//为什么material要加在循环里面才不会报错，否则会说object destroy？
-			var material = Cesium.Material.fromType('Color', {
-				color : new Cesium.Color(1.0, 1.0, 0.0, 1.0)
-			});
-			var path = [];
-			for(lng = minLng; lng < maxLng; lng += granularity) {
-				path.push(new Cesium.Cartographic(lng, Cesium.Math.toRadians(specLines[i])));
+			for(index = 0; index < mins.length && dLng < ((extent.east - extent.west) / 10); index++) {
+				dLng = mins[index];
 			}
-			path.push(new Cesium.Cartographic(maxLng, Cesium.Math.toRadians(specLines[i])));
-			this._specLines.add({
-				positions : ellipsoid.cartographicArrayToCartesianArray(path),
-				material : material,
-				width: 2,
-			});
-			this.makeLabel4Spec((minLng+maxLng)/2-granularity, Cesium.Math.toRadians(specLines[i]), i, true);
-		}
+			console.log(2,Cesium.Math.toDegrees(extent.west),Cesium.Math.toDegrees(extent.east));
+			// round iteration limits to the computed grid interval
+			var minLng = (extent.west < 0 ? Math.ceil(extent.west / dLng) : Math.floor(extent.west / dLng)) * dLng;
+			var minLat = (extent.south < 0 ? Math.ceil(extent.south / dLat) : Math.floor(extent.south / dLat)) * dLat;
+			var maxLng = (extent.east < 0 ? Math.ceil(extent.east / dLng) : Math.floor(extent.east / dLng)) * dLng;    //原来这两行dling和dlat写反了，已经改回来了
+			var maxLat = (extent.north < 0 ? Math.ceil(extent.north / dLat) : Math.floor(extent.north / dLat)) * dLat;
+
+			// extend to make sure we cover for non refresh of tiles
+			minLng = Math.max(minLng - 2 * dLng, -Math.PI);
+			maxLng = Math.min(maxLng + 2 * dLng, Math.PI);
+			minLat = Math.max(minLat - 2 * dLat, -Math.PI / 2);
+			maxLat = Math.min(maxLat + 2 * dLng, Math.PI / 2);
+
+			var ellipsoid = this._ellipsoid;
+			var lat, lng, granularity = Cesium.Math.toRadians(1);
+
+			// labels positions
+			var latitudeText = minLat + Math.floor((maxLat - minLat) / dLat / 2) * dLat;
+			for(lng = minLng; lng < maxLng; lng += dLng) {
+				// draw meridian
+				var path = [];
+				for(lat = minLat; lat < maxLat; lat += granularity) {
+					path.push(new Cesium.Cartographic(lng, lat))
+				}
+				path.push(new Cesium.Cartographic(lng, maxLat));
+				this._polylines.add({
+					positions : ellipsoid.cartographicArrayToCartesianArray(path),
+					width: 1
+				});
+				var degLng = Cesium.Math.toDegrees(lng);
+				this.makeLabel(lng, latitudeText, this._sexagesimal ? this._decToSex(degLng) : degreeToText(degLng,dLng,'lon'), false);
+			}
+			
+			// lats
+			var longitudeText = minLng + Math.floor((maxLng - minLng) / dLng / 2) * dLng;
+			for(lat = minLat; lat < maxLat; lat += dLat) {
+				// draw parallels
+				var path = [];
+				for(lng = minLng; lng < maxLng; lng += granularity) {
+					path.push(new Cesium.Cartographic(lng, lat))
+				}
+				path.push(new Cesium.Cartographic(maxLng, lat));
+				this._polylines.add({
+					positions : ellipsoid.cartographicArrayToCartesianArray(path),
+					width: 1,
+				});
+				var degLat = Cesium.Math.toDegrees(lat);
+				this.makeLabel(longitudeText, lat, this._sexagesimal ? this._decToSex(degLat) : degreeToText(degLat,dLat,'lat'), true);
+			}
+			
+			//特殊经纬线
+			for(i in specLines)
+			{
+				//为什么material要加在循环里面才不会报错，否则会说object destroy？
+				var material = Cesium.Material.fromType('Color', {
+					color : new Cesium.Color(1.0, 1.0, 0.0, 1.0)
+				});
+				var path = [];
+				for(lng = minLng; lng < maxLng; lng += granularity) {
+					path.push(new Cesium.Cartographic(lng, Cesium.Math.toRadians(specLines[i])));
+				}
+				path.push(new Cesium.Cartographic(maxLng, Cesium.Math.toRadians(specLines[i])));
+				this._specLines.add({
+					positions : ellipsoid.cartographicArrayToCartesianArray(path),
+					material : material,
+					width: 2,
+				});
+				this.makeLabel4Spec((minLng+maxLng)/2-granularity, Cesium.Math.toRadians(specLines[i]), i, true);
+			}
 		}
     };
 
