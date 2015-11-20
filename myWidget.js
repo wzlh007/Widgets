@@ -804,8 +804,8 @@ var Graticule = (function() {
         // round iteration limits to the computed grid interval
         var minLng = (extent.west < 0 ? Math.ceil(extent.west / dLng) : Math.floor(extent.west / dLng)) * dLng;
         var minLat = (extent.south < 0 ? Math.ceil(extent.south / dLat) : Math.floor(extent.south / dLat)) * dLat;
-        var maxLng = (extent.east < 0 ? Math.ceil(extent.east / dLat) : Math.floor(extent.east / dLat)) * dLat;
-        var maxLat = (extent.north < 0 ? Math.ceil(extent.north / dLng) : Math.floor(extent.north / dLng)) * dLng;
+        var maxLng = (extent.east < 0 ? Math.ceil(extent.east / dLng) : Math.floor(extent.east / dLng)) * dLng;    //原来这两行dling和dlat写反了，已经改回来了
+        var maxLat = (extent.north < 0 ? Math.ceil(extent.north / dLat) : Math.floor(extent.north / dLat)) * dLat;
 
         // extend to make sure we cover for non refresh of tiles
         minLng = Math.max(minLng - 2 * dLng, -Math.PI);
@@ -871,6 +871,7 @@ var Graticule = (function() {
 			});
 			this.makeLabel4Spec((minLng+maxLng)/2-granularity, Cesium.Math.toRadians(specLines[i]), i, true);
 		}
+		
     };
 
     _.prototype.requestImage = function(x, y, level) {
@@ -962,7 +963,7 @@ var Graticule = (function() {
 					 '北回归线' : 23.5,
 					 '赤道' : 0,
 					 '南回归线' : -23.5,
-					 '南极圈' : 66.5
+					 '南极圈' : -66.5
 					 };
 	
     function loggingMessage(message) {
