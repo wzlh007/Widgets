@@ -22,10 +22,6 @@ function myWidget(viewer,scene,ellipsoid)
 	this.zoomRate = this.getcamera().carto.height/100;
 	this.clickZoomIn = clickZoomIn;
 	this.clickZoomOut = clickZoomOut;
-	this.getExtent = getExtent;
-	this.drawExtent = drawExtent;
-	this.drawGrid = drawGrid;
-	this.drawSpecLines = drawSpecLines;
 	this.drawGraticule = drawGraticule;
 }
 	//经纬度高度获取
@@ -424,176 +420,6 @@ function myWidget(viewer,scene,ellipsoid)
 		this.zoomRate = cameraheight0/100;
 	}
 	
-	//无用
-	function getExtent()
-	{
-		var leftup = new Cesium.Cartesian2(0, 0);
-		var rightdown = new Cesium.Cartesian2(this.scene.canvas.width, this.scene.canvas.height);
-		
-		var start = this.scene.camera.pickEllipsoid(leftup, this.ellipsoid);
-		var end = this.scene.camera.pickEllipsoid(rightdown, this.ellipsoid);
-		//console.log(start);
-		if (start&&end) {
-			start = this.ellipsoid.cartesianToCartographic(start);
-			end = this.ellipsoid.cartesianToCartographic(end);
-			var extent = new Cesium.Rectangle(start.longitude, end.latitude, end.longitude, start.latitude);
-			console.log(start.longitude*180/Math.PI,start.latitude*180/Math.PI);
-			console.log(end.longitude*180/Math.PI,end.latitude*180/Math.PI);
-			console.log(extent);
-			return extent;
-		} //else if(!start&&!end) console.log("Whole Extent");
-		else
-		{//The sky is visible in 3D
-			console.log("Sky is visible");
-			// Translate coordinates
-			var x1 = leftup.x;
-			var y1 = leftup.y;
-			var x2 = rightdown.x;
-			var y2 = rightdown.y;
-			// Define differences and error check
-			var dx = Math.abs(x2 - x1);
-			var dy = Math.abs(y2 - y1);
-			var sx = (x1 < x2) ? 1 : -1;
-			var sy = (y1 < y2) ? 1 : -1;
-			var err = dx - dy;
-			
-			// start = scene.camera.pickEllipsoid({x:x1, y:y1}, this.ellipsoid);
-			// if(start) {
-				// return start;
-			// }
-			if(!start&&!end)
-			{
-				// Main loop
-				while (!((x1 == x2) && (y1 == y2))) {
-				  var e2 = err << 1;
-				  if (e2 > -dy) {
-					err -= dy;
-					x1 += sx;
-					x2 -= sx;
-				  }
-				  if (e2 < dx) {
-					err += dx;
-					y1 += sy;
-					y2 -= sy;
-				  }
-				  
-				  start = this.scene.camera.pickEllipsoid({x:x1, y:y1}, this.ellipsoid);
-				  end = this.scene.camera.pickEllipsoid({x:x2, y:y2}, this.ellipsoid);
-					if(start&&end) {
-						start = this.ellipsoid.cartesianToCartographic(start);
-						end = this.ellipsoid.cartesianToCartographic(end);
-						var extent = new Cesium.Rectangle(start.longitude, end.latitude, end.longitude, start.latitude);
-						console.log(start.longitude*180/Math.PI,start.latitude*180/Math.PI);
-						console.log(end.longitude*180/Math.PI,end.latitude*180/Math.PI);
-						console.log(extent);
-						return extent;
-					}
-				}
-				return console.log("no Extent");
-			}
-			else
-			{
-				// Main loop
-				while (!((x1 == x2) && (y1 == y2))) {
-				  var e2 = err << 1;
-				  if (e2 > -dy) {
-					err -= dy;
-					x1 += sx;
-				  }
-				  if (e2 < dx) {
-					err += dx;
-					y1 += sy;
-				  }
-				  
-				  start = this.scene.camera.pickEllipsoid({x:leftup.x, y:y1}, this.ellipsoid);
-					if(start) {
-						start = this.ellipsoid.cartesianToCartographic(start);
-						end = this.ellipsoid.cartesianToCartographic(end);
-						var extent = new Cesium.Rectangle(start.longitude, end.latitude, end.longitude, start.latitude);
-						console.log(start.longitude*180/Math.PI,start.latitude*180/Math.PI);
-						console.log(end.longitude*180/Math.PI,end.latitude*180/Math.PI);
-						console.log(extent);
-						return extent;
-					}
-				}
-				return null;
-			}
-			
-		}
-		
-	}
-	
-	//无用
-	function drawExtent(extent)
-	{
-		// var rectangle = new Cesium.RectangleGeometry({
-		  // ellipsoid : Cesium.Ellipsoid.WGS84,
-		  // rectangle : extent,
-		  // height : 0.0
-		// });
-		this.scene.primitives.removeAll();
-		var RectanglePrimitive = this.scene.primitives.add(new Cesium.RectanglePrimitive({
-			rectangle : extent//,
-			//material : Cesium.Material.fromType('Dot')
-		}));
-		console.log(RectanglePrimitive);
-		return RectanglePrimitive;
-	}
-	
-	//无用
-	function drawGrid()
-	{
-		for(var i=0;i<1;i++)
-		{
-			var latadd=(20.0/Math.pow(2,i));
-			var lonadd=(10.0/Math.pow(2,i));
-			for(var lon=-180;lon<180;lon+=lonadd)
-			{
-				for(var lat = -90.0; lat < 90.0; lat += latadd)
-				{
-					this.viewer.entities.add({
-					  polyline : {
-						positions : Cesium.Cartesian3.fromDegreesArray([lon, lat,
-																		lon, lat+latadd]),
-						width : 1,
-						material : Cesium.Color.WHITE
-					  }
-					});
-					this.viewer.entities.add({
-					  polyline : {
-						positions : Cesium.Cartesian3.fromDegreesArray([lon, lat,
-																		lon+lonadd, lat]),
-						width : 1,
-						material : Cesium.Color.WHITE
-					  }
-					});
-				}
-			}
-		}
-	}
-	//赤道，南北回归线，南北纬，//无用
-	function drawSpecLines()
-	{
-		console.log('start');
-		var specLines = [66.5,23.5,0,-23.5,-66.5];
-		var add = 10;
-		console.log(specLines[1]);
-		for(var i=0;i<specLines.length;i++)
-		{
-			for(var j=-180;j<180;j+=add)
-			var line = this.viewer.entities.add({
-				//name : 'Red line on the surface',
-				polyline : {
-					positions : Cesium.Cartesian3.fromDegreesArray([0, specLines[i],
-																	j+add, specLines[i]]),
-					//width : 5,
-					material : Cesium.Color.RED
-				}
-			});
-			console.log(line);
-		}
-	}
-	
 /**
  * Created by thomas on 27/01/14.
  * Edited by ChrisWong on 19/11/15.
@@ -804,7 +630,7 @@ var Graticule = (function() {
         for(index = 0; index < mins.length && dLat < ((extent.north - extent.south) / 10); index++) {
             dLat = mins[index];
         }
-		console.log(0,Cesium.Math.toDegrees(extent.west),Cesium.Math.toDegrees(extent.east))
+		//console.log(0,Cesium.Math.toDegrees(extent.west),Cesium.Math.toDegrees(extent.east))
 		//判断extent是否横跨180经线
 		if(extent.east>(Math.PI/2) && extent.east<Math.PI && extent.west<(-Math.PI/2) && extent.west>-Math.PI)
 		//if( east_west > Cesium.Math.PI/2)
@@ -907,7 +733,7 @@ var Graticule = (function() {
 			for(index = 0; index < mins.length && dLng < ((extent.east - extent.west) / 10); index++) {
 				dLng = mins[index];
 			}
-			console.log(2,Cesium.Math.toDegrees(extent.west),Cesium.Math.toDegrees(extent.east));
+			//console.log(2,Cesium.Math.toDegrees(extent.west),Cesium.Math.toDegrees(extent.east));
 			// round iteration limits to the computed grid interval
 			var minLng = (extent.west < 0 ? Math.ceil(extent.west / dLng) : Math.floor(extent.west / dLng)) * dLng;
 			var minLat = (extent.south < 0 ? Math.ceil(extent.south / dLat) : Math.floor(extent.south / dLat)) * dLat;
@@ -919,7 +745,7 @@ var Graticule = (function() {
 			maxLng = Math.min(maxLng + 2 * dLng, Math.PI);
 			minLat = Math.max(minLat - 2 * dLat, -Math.PI / 2);
 			maxLat = Math.min(maxLat + 2 * dLat, Math.PI / 2);
-			console.log(2,Cesium.Math.toDegrees(minLng),Cesium.Math.toDegrees(maxLng),Cesium.Math.toDegrees(dLng));
+			//console.log(2,Cesium.Math.toDegrees(minLng),Cesium.Math.toDegrees(maxLng),Cesium.Math.toDegrees(dLng));
 			var ellipsoid = this._ellipsoid;
 			var lat, lng, granularity = Cesium.Math.toRadians(1);
 
@@ -1074,7 +900,7 @@ var Graticule = (function() {
 			return Cesium.Rectangle.MAX_VALUE;
 		}
 		else if((!isCartesian3(corners[0])&&isCartesian3(corners[2]))||(!isCartesian3(corners[1])&&isCartesian3(corners[3]))){	
-			console.log('sky');
+			//console.log('sky');
 			var y1 = leftup.y;
 			var y2 = leftdown.y;
 			// Define differences and error check
@@ -1093,7 +919,7 @@ var Graticule = (function() {
 				y1 += sy;
 				corners[1] = camera.pickEllipsoid({x:rightup.x, y:y1}, this._ellipsoid);	
 			}
-			console.log(corners);
+			//console.log(corners);
 			return Cesium.Rectangle.fromCartographicArray(this._ellipsoid.cartesianArrayToCartographicArray(corners));
 		}
 		else if(isCartesian3(corners[0])&&isCartesian3(corners[3])){
