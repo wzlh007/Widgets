@@ -1059,18 +1059,67 @@ var Graticule = (function() {
     _.prototype._getExtentView = function(){
         var camera = this._scene.camera ;
         var canvas = this._scene.canvas;
-        var corners = [
+		var leftup = new Cesium.Cartesian2(0, 0);
+		var rightdown = new Cesium.Cartesian2(canvas.width, canvas.height);
+		var rightup = new Cesium.Cartesian2(canvas.width,0);
+		var leftdown = new Cesium.Cartesian2(0, canvas.height)
+		// Translate coordinates
+		var corners = [
+            camera.pickEllipsoid(leftup, this._ellipsoid),
+            camera.pickEllipsoid(rightup, this._ellipsoid),
+            camera.pickEllipsoid(leftdown, this._ellipsoid),
+            camera.pickEllipsoid(rightdown, this._ellipsoid)
+        ];
+		if(corners[0]===undefined&&corners[3]===undefined&&corners[1]===undefined&&corners[2]===undefined){
+			return Cesium.Rectangle.MAX_VALUE;
+		}
+		else if((!isCartesian3(corners[0])&&isCartesian3(corners[2]))||(!isCartesian3(corners[1])&&isCartesian3(corners[3]))){	
+			console.log('sky');
+			var y1 = leftup.y;
+			var y2 = leftdown.y;
+			// Define differences and error check
+			var sy = (y1 < y2) ? 1 : -1;
+			// Main loop
+			while (!isCartesian3(corners[0])&&!(y1==y2)) {
+				y1 += sy;
+				corners[0] = camera.pickEllipsoid({x:leftup.x, y:y1}, this._ellipsoid);	
+			}
+			var y1 = rightup.y;
+			var y2 = rightdown.y;
+			// Define differences and error check
+			var sy = (y1 < y2) ? 1 : -1;
+			// Main loop
+			while (!isCartesian3(corners[1])&&!(y1==y2)) {
+				y1 += sy;
+				corners[1] = camera.pickEllipsoid({x:rightup.x, y:y1}, this._ellipsoid);	
+			}
+			console.log(corners);
+			return Cesium.Rectangle.fromCartographicArray(this._ellipsoid.cartesianArrayToCartographicArray(corners));
+		}
+		else if(isCartesian3(corners[0])&&isCartesian3(corners[3])){
+			return Cesium.Rectangle.fromCartographicArray(this._ellipsoid.cartesianArrayToCartographicArray(corners));
+		}
+		
+		
+        /* var corners = [
             camera.pickEllipsoid(new Cesium.Cartesian2(0, 0), this._ellipsoid),
             camera.pickEllipsoid(new Cesium.Cartesian2(canvas.width, 0), this._ellipsoid),
             camera.pickEllipsoid(new Cesium.Cartesian2(0, canvas.height), this._ellipsoid),
             camera.pickEllipsoid(new Cesium.Cartesian2(canvas.width, canvas.height), this._ellipsoid)
         ];
-        for(var index = 0; index < 4; index++) {
+		if(corners[0]===undefined&&corners[3]===undefined){
+			console.log(corners[3] instanceof Cesium.Cartesian3);
+			return Cesium.Rectangle.MAX_VALUE;
+		}
+		else if(!(corners[0] instanceof Cesium.Cartesian3)&&(corners[3] instanceof Cesium.Cartesian3)){
+			//console.log(corners[3]);
+		} */
+/*         for(var index = 0; index < 4; index++) {
             if(corners[index] === undefined) {
                 return Cesium.Rectangle.MAX_VALUE;
             }
-        }
-        return Cesium.Rectangle.fromCartographicArray(this._ellipsoid.cartesianArrayToCartographicArray(corners));
+        } */
+        return Cesium.Rectangle.MAX_VALUE;
     }
 	
     function gridPrecision(dDeg) {
@@ -1096,6 +1145,11 @@ var Graticule = (function() {
 		}
 		else return false;
 		return string;
+	}
+	
+	function isCartesian3(data){
+		if(data instanceof Cesium.Cartesian3) return true;
+		else return false;
 	}
 
     var mins = [
