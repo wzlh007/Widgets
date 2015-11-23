@@ -911,7 +911,7 @@ var Graticule = (function() {
 				corners[0] = camera.pickEllipsoid({x:leftup.x, y:y1}, this._ellipsoid);	
 			}
 			var y1 = rightup.y;
-			var y2 = rightdown.y;
+			//var y2 = rightdown.y;
 			// Define differences and error check
 			var sy = (y1 < y2) ? 1 : -1;
 			// Main loop
@@ -920,6 +920,16 @@ var Graticule = (function() {
 				corners[1] = camera.pickEllipsoid({x:rightup.x, y:y1}, this._ellipsoid);	
 			}
 			//console.log(corners);
+			
+			var y1 = rightup.y;
+			var sy = (y1 < y2) ? 1 : -1;
+			var center = camera.pickEllipsoid({x:(rightup.x+leftup.x)/2, y:y1}, this._ellipsoid);
+			while (!isCartesian3(center)&&!(y1==y2)) {
+				y1 += sy;
+				center = camera.pickEllipsoid({x:(rightup.x+leftup.x)/2, y:y1}, this._ellipsoid);	
+			}
+			corners.push(center);
+			console.log(corners);
 			return Cesium.Rectangle.fromCartographicArray(this._ellipsoid.cartesianArrayToCartographicArray(corners));
 		}
 		else if(isCartesian3(corners[0])&&isCartesian3(corners[3])){
