@@ -630,7 +630,7 @@ var Graticule = (function() {
         for(index = 0; index < mins.length && dLat < ((extent.north - extent.south) / 10); index++) {
             dLat = mins[index];
         }
-		//console.log(0,Cesium.Math.toDegrees(extent.west),Cesium.Math.toDegrees(extent.east))
+		console.log(0,Cesium.Math.toDegrees(extent.west),Cesium.Math.toDegrees(extent.east))
 		//判断extent是否横跨180经线
 		if(extent.east>(Math.PI/2) && extent.east<Math.PI && extent.west<(-Math.PI/2) && extent.west>-Math.PI)
 		//if( east_west > Cesium.Math.PI/2)
