@@ -19,7 +19,7 @@ function myWidget(viewer,scene,ellipsoid)
 	this.homeView = {destination:new Cesium.Cartesian3(2659517.6470542485, -20201042.105477437, 14326778.724919258),
 	orientation:{heading:0,pitch:-1.5688445983144326,roll:0}};
 	
-	this.zoomRate = this.getcamera().carto.height/100;
+	this.zoomRate = this.getcamera().carto.height/10;
 	this.clickZoomIn = clickZoomIn;
 	this.clickZoomOut = clickZoomOut;
 	this.drawGraticule = drawGraticule;
@@ -27,7 +27,7 @@ function myWidget(viewer,scene,ellipsoid)
 	//经纬度高度获取
 	function movePick()
 	{
-		document.write("<div class=\"cesium-toolbar2\" id=\"cameraView\"><span id=\"long\">经度：</span><span id=\"lat\"  style=\"padding-left: 10px;\">    \t纬度：</span><span id=\"height\"  style=\"padding-left: 10px;\">    \t高度：</span><span id=\"viewheight\"  style=\"padding-left: 10px;\">    \t视角高度：</span></div>\"");
+		document.write("<div class=\"cesium-toolbar2\" id=\"cameraView\"><span id=\"long\">经度：</span><span id=\"lat\"  style=\"padding-left: 10px;\">    \t纬度：</span><span id=\"height\"  style=\"padding-left: 10px;\">    \t海拔：</span><span id=\"viewheight\"  style=\"padding-left: 10px;\">    \t视角高程：</span></div>\"");
 		var scene = this.scene;
 		var ellipsoid =this.ellipsoid;
 		var terrainProvider = new Cesium.CesiumTerrainProvider({//无法获取terrainprovider
@@ -50,7 +50,7 @@ function myWidget(viewer,scene,ellipsoid)
 				var heightString = '';// = positionCartographic.height.toFixed(2);//cartographic.height.toFixed(2);
 				
 				var cameraheight0 = this.getcamera().carto.height;
-				this.zoomRate = cameraheight0/100;
+				this.zoomRate = cameraheight0/10;
 				var cameraheight = cameraheight0.toFixed(0);
 				var positions =[positionCartographic];
 				var promise = Cesium.sampleTerrain(terrainProvider, 9, positions);  
@@ -60,20 +60,20 @@ function myWidget(viewer,scene,ellipsoid)
 					if(height)
 						heightString = height;
 					else heightString =  "未定义";
-					document.getElementById("height").innerHTML='\t'+"高度: "+heightString+'米';
+					document.getElementById("height").innerHTML='\t'+"海拔: "+heightString+' 米';
 				  }).otherwise(function(error){
 					  //Display any errrors encountered while loading.
-					  document.getElementById("height").innerHTML="	\t高度: 未定义";
+					  document.getElementById("height").innerHTML="	\t海拔: 未定义";
 				  });
 				
 				document.getElementById("long").innerHTML="经度: "+longitudeString;
 				document.getElementById("lat").innerHTML="    \t纬度: "+latitudeString;
-				document.getElementById("viewheight").innerHTML="    \t视角高度: "+cameraheight+'米';
+				document.getElementById("viewheight").innerHTML="    \t视角高程: "+cameraheight+' 米';
 				
 			} else {
 				document.getElementById("long").innerHTML="经度：";
 				document.getElementById("lat").innerHTML="    \t纬度：";
-				document.getElementById("height").innerHTML="    \t高度：";
+				document.getElementById("height").innerHTML="    \t海拔：";
 				
 			}
 			//console.log(this.zoomRate);
@@ -81,14 +81,14 @@ function myWidget(viewer,scene,ellipsoid)
 		
 		handler.setInputAction(function() {
 			var cameraheight0 = this.getcamera().carto.height;
-			this.zoomRate = cameraheight0/100;
+			this.zoomRate = cameraheight0/10;
 			var cameraheight = cameraheight0.toFixed(0);
 			//console.log(this.zoomRate);
-			document.getElementById("viewheight").innerHTML="    \t视角高度: "+cameraheight+'米';
+			document.getElementById("viewheight").innerHTML="    \t视角高程: "+cameraheight+' 米';
 		}, Cesium.ScreenSpaceEventType.WHEEL);
 		
 		var cameraheight = this.getcamera().carto.height.toFixed(0);
-		document.getElementById("viewheight").innerHTML="    \t视角高度: "+cameraheight+'米';
+		document.getElementById("viewheight").innerHTML="    \t视角高程: "+cameraheight+' 米';
 	}
 //当前相机信息获取
 	function getcamera()
@@ -138,7 +138,7 @@ function myWidget(viewer,scene,ellipsoid)
 		var cesiumheight = document.getElementById("cesiumContainer").clientHeight;
 		var scaleConWidth = document.getElementById("scaleContainer").clientWidth;
 		var scaleConHeight = document.getElementById("scaleContainer").clientHeight;
-		var windowleft =new Cesium.Cartesian2(cesiumwidth-scaleConWidth-10-10-1-95,cesiumheight-80-7-1);
+		var windowleft =new Cesium.Cartesian2(cesiumwidth-scaleConWidth-10-10-1-95,cesiumheight-80-7-1);//如何获取svg长度
 		var windowright =new Cesium.Cartesian2(cesiumwidth-scaleConWidth-10-1-5-10,cesiumheight-80-7-1);
 		var scaleString = '';
 		
@@ -160,8 +160,8 @@ function myWidget(viewer,scene,ellipsoid)
 			if(position1&&position2){
 				var distance = Cesium.Cartesian3.distance(position1,position2)
 				if(distance>3000)
-				document.getElementById("scaletext").innerHTML= (distance/1000).toFixed(0)+"公里";
-				else document.getElementById("scaletext").innerHTML= distance.toFixed(0)+"米";
+				document.getElementById("scaletext").innerHTML= (distance/1000).toFixed(0)+" 公里";
+				else document.getElementById("scaletext").innerHTML= distance.toFixed(0)+" 米";
 			}
 			else document.getElementById("scaletext").innerHTML="比例尺";
 
@@ -178,8 +178,8 @@ function myWidget(viewer,scene,ellipsoid)
 			if(position1&&position2){
 				var distance = Cesium.Cartesian3.distance(position1,position2)
 				if(distance>3000)
-				document.getElementById("scaletext").innerHTML= (distance/1000).toFixed(0)+"公里";
-				else document.getElementById("scaletext").innerHTML= distance.toFixed(0)+"米";
+				document.getElementById("scaletext").innerHTML= (distance/1000).toFixed(0)+" 公里";
+				else document.getElementById("scaletext").innerHTML= distance.toFixed(0)+" 米";
 			}
 			else document.getElementById("scaletext").innerHTML="比例尺";
 
@@ -336,7 +336,7 @@ function myWidget(viewer,scene,ellipsoid)
 		var homeView = {destination:new Cesium.Cartesian3(2659517.6470542485, -20201042.105477437, 14326778.724919258),
 						orientation:{heading:0,pitch:-1.5688445983144326,roll:0}};
 		var cameraHeight = this.getcamera().carto.height.toFixed(2);
-		var zoomRate = cameraHeight/1000;
+		var zoomRate = cameraHeight/10;
 		//console.log(zoomRate);
 		var naviHTML='    <div class="navigation-controls">\
 			<div title="Zoom In" class="navigation-control" onclick="clickZoomIn()">\
@@ -392,15 +392,15 @@ function myWidget(viewer,scene,ellipsoid)
 		var string ;
 		if(lonlat=='lon')
 		{
-			if(num>0) string = Math.abs(num).toFixed(6)+'°E';
+			if(num>0) string = Math.abs(num).toFixed(6)+'°东';
 			else if(num==0) string = Math.abs(num).toFixed(6);
-			else string = Math.abs(num).toFixed(6)+'°W';
+			else string = Math.abs(num).toFixed(6)+'°西';
 		}
 		else if(lonlat == 'lat')
 		{
-			if(num>0) string = Math.abs(num).toFixed(6)+'°N';
+			if(num>0) string = Math.abs(num).toFixed(6)+'°北';
 			else if(num==0) string = Math.abs(num).toFixed(6);
-			else string = Math.abs(num).toFixed(6)+'°S';
+			else string = Math.abs(num).toFixed(6)+'°南';
 		}
 		else return false;
 		return string;
@@ -411,13 +411,13 @@ function myWidget(viewer,scene,ellipsoid)
 	{
 		viewer.camera.zoomIn(this.zoomRate);
 		var cameraheight0 = this.getcamera().carto.height;
-		this.zoomRate = cameraheight0/100;
+		this.zoomRate = cameraheight0/10;
 	}
 	function clickZoomOut()
 	{
 		viewer.camera.zoomOut(this.zoomRate);
 		var cameraheight0 = this.getcamera().carto.height;
-		this.zoomRate = cameraheight0/100;
+		this.zoomRate = cameraheight0/10;
 	}
 	
 /**
@@ -624,7 +624,7 @@ var Graticule = (function() {
 
         var dLat = 0, dLng = 0, index;
 		
-		
+		var linewidth = 0.5;
 		
         // get the nearest to the calculated value
         for(index = 0; index < mins.length && dLat < ((extent.north - extent.south) / 10); index++) {
@@ -665,7 +665,7 @@ var Graticule = (function() {
 				path.push(new Cesium.Cartographic(lng, maxLat));
 				this._polylines.add({
 					positions : ellipsoid.cartographicArrayToCartesianArray(path),
-					width: 1
+					width: linewidth
 				});
 				var degLng = Cesium.Math.toDegrees(lng);
 				this.makeLabel(lng, latitudeText, this._sexagesimal ? this._decToSex(degLng) : degreeToText(degLng,dLng,'lon'), false);
@@ -679,7 +679,7 @@ var Graticule = (function() {
 				path.push(new Cesium.Cartographic(lng, maxLat));
 				this._polylines.add({
 					positions : ellipsoid.cartographicArrayToCartesianArray(path),
-					width: 1
+					width: linewidth
 				});
 				var degLng = Cesium.Math.toDegrees(lng);
 				this.makeLabel(lng, latitudeText, this._sexagesimal ? this._decToSex(degLng) : degreeToText(degLng,dLng,'lon'), false);
@@ -699,7 +699,7 @@ var Graticule = (function() {
 				path.push(new Cesium.Cartographic(maxLng, lat));
 				this._polylines.add({
 					positions : ellipsoid.cartographicArrayToCartesianArray(path),
-					width: 1,
+					width: linewidth,
 				});
 				var degLat = Cesium.Math.toDegrees(lat);
 				this.makeLabel(longitudeText, lat, this._sexagesimal ? this._decToSex(degLat) : degreeToText(degLat,dLat,'lat'), true);
@@ -760,7 +760,7 @@ var Graticule = (function() {
 				path.push(new Cesium.Cartographic(lng, maxLat));
 				this._polylines.add({
 					positions : ellipsoid.cartographicArrayToCartesianArray(path),
-					width: 1
+					width: linewidth
 				});
 				var degLng = Cesium.Math.toDegrees(lng);
 				this.makeLabel(lng, latitudeText, this._sexagesimal ? this._decToSex(degLng) : degreeToText(degLng,dLng,'lon'), false);
@@ -777,7 +777,7 @@ var Graticule = (function() {
 				path.push(new Cesium.Cartographic(maxLng, lat));
 				this._polylines.add({
 					positions : ellipsoid.cartographicArrayToCartesianArray(path),
-					width: 1,
+					width: linewidth,
 				});
 				var degLat = Cesium.Math.toDegrees(lat);
 				this.makeLabel(longitudeText, lat, this._sexagesimal ? this._decToSex(degLat) : degreeToText(degLat,dLat,'lat'), true);
@@ -824,7 +824,7 @@ var Graticule = (function() {
 			path.push(new Cesium.Cartographic(lng, maxLat));
 			this._baseLines.add({
 				positions : ellipsoid.cartographicArrayToCartesianArray(path),
-				width: 1
+				width: linewidth
 			});
 			var degLng = Cesium.Math.toDegrees(lng);
 			//this.makeLabel(lng, latitudeText, this._sexagesimal ? this._decToSex(degLng) : degreeToText(degLng,dLng,'lon'), false);
@@ -841,7 +841,7 @@ var Graticule = (function() {
 			path.push(new Cesium.Cartographic(maxLng, lat));
 			this._baseLines.add({
 				positions : ellipsoid.cartographicArrayToCartesianArray(path),
-				width: 1,
+				width: linewidth,
 			});
 			var degLat = Cesium.Math.toDegrees(lat);
 			//this.makeLabel(longitudeText, lat, this._sexagesimal ? this._decToSex(degLat) : degreeToText(degLat,dLat,'lat'), true);
