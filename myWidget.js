@@ -896,6 +896,7 @@ var Graticule = (function() {
             camera.pickEllipsoid(leftdown, this._ellipsoid),
             camera.pickEllipsoid(rightdown, this._ellipsoid)
         ];
+		
 		if(corners[0]===undefined&&corners[3]===undefined&&corners[1]===undefined&&corners[2]===undefined){
 			return Cesium.Rectangle.MAX_VALUE;
 		}
@@ -933,6 +934,8 @@ var Graticule = (function() {
 			return Cesium.Rectangle.fromCartographicArray(this._ellipsoid.cartesianArrayToCartographicArray(corners));
 		}
 		else if(isCartesian3(corners[0])&&isCartesian3(corners[3])){
+			crossTest(corners);
+			console.log('cross pass');
 			return Cesium.Rectangle.fromCartographicArray(this._ellipsoid.cartesianArrayToCartographicArray(corners));
 		}
 		
@@ -987,6 +990,19 @@ var Graticule = (function() {
 		if(data instanceof Cesium.Cartesian3) return true;
 		else return false;
 	}
+	
+	function crossTest(corners){
+		//var ellipsoid = this._ellipsoid;
+		var cartoArr = Cesium.Ellipsoid.WGS84.cartesianArrayToCartographicArray(corners);
+		if(cross180(cartoArr[0].longitude,cartoArr[2].longtitude)) console.log('leftup,leftdown cross 180');
+		console.log('cross test done');
+	}
+	function cross180(lon1,lon2){
+		var lon1back = (lon1>Math.PI/2&&lon1<Math.PI)||(lon1<-Math.PI/2&&lon1>-Math.PI);
+		if((lon1*lon2<0)&&(lon1back))
+			return true;
+		return false;
+	}
 
     var mins = [
         Cesium.Math.toRadians(0.05),
@@ -1012,7 +1028,6 @@ var Graticule = (function() {
         logging.innerHTML += message;
     }
 	
-	
     return _;
 
 })();
@@ -1027,3 +1042,4 @@ function drawGraticule()
 	this.scene.imageryLayers.addImageryProvider(graticule);
 	graticule.setVisible(true);
 }
+
