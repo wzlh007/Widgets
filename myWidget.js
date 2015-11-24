@@ -933,6 +933,9 @@ var Graticule = (function() {
 			return Cesium.Rectangle.fromCartographicArray(this._ellipsoid.cartesianArrayToCartographicArray(corners));
 		}
 		else if(isCartesian3(corners[0])&&isCartesian3(corners[3])){
+			var extent = new wzlExtent(0,0,0,0);
+			extent = extent.from180ArrayTo360(this._ellipsoid.cartesianArrayToCartographicArray(corners));
+			console.log(extent.west*180/Math.PI,extent.east*180/Math.PI,extent.north*180/Math.PI,extent.south*180/Math.PI);
 			return Cesium.Rectangle.fromCartographicArray(this._ellipsoid.cartesianArrayToCartographicArray(corners));
 		}
 		
@@ -1026,4 +1029,46 @@ function drawGraticule()
         }, this.scene);
 	this.scene.imageryLayers.addImageryProvider(graticule);
 	graticule.setVisible(true);
+}
+
+function wzlExtent(_west, _south, _east, _north){
+	this.west = _west; 
+	this.south = _south;
+	this.east = _east;
+	this.north = _north;
+	this.from180ArrayTo360 = from180ArrayTo360;
+}
+function CartographicIn360(lon,lat){
+	this.longitude = lon;
+	this.latitude =lat;
+}
+function from180ArrayTo360(cartoArray){
+	//console.log(cartoArray);
+	var arr360 = [];
+	var i=0;
+	if(Array.isArray(cartoArray)){
+		for(i=0;i<cartoArray.length;i++){
+			arr360.push(new CartographicIn360(cartoArray[i].longitude+Math.PI , cartoArray[i].latitude));
+			//arr360[i].longitude = cartoArray[i].longitude+180;
+			//arr360[i].latitude = cartoArray[i].latitude;
+		}
+		//console.log(arr360);
+		var extent = new wzlExtent(0,0,0,0);
+		var minlon =Math.PI*2;
+		var maxlon = 0;
+		var minlat = Math.PI/2;
+		var maxlat = -Math.PI/2;
+		for(i=0;i<cartoArray.length;i++){
+			if(arr360[i].longitude < minlon) minlon = arr360[i].longitude;
+			if(arr360[i].longitude > maxlon) maxlon = arr360[i].longitude;
+			if(arr360[i].latitude < minlat) minlat = arr360[i].latitude;
+			if(arr360[i].latitude > maxlat) maxlat = arr360[i].latitude;
+		}
+		extent.west = minlon;
+		extent.south = minlat;
+		extent.east = maxlon;
+		extent.north = maxlat;
+		return extent;
+	}
+	return null;
 }
