@@ -470,6 +470,7 @@ var Graticule = (function() {
         scene.primitives.add(this._baseLines);
 		//console.log('end');
         this._ellipsoid = scene.globe.ellipsoid;
+		this._isCross = false;
 
         var canvas = document.createElement('canvas');
         canvas.width = 256;
@@ -613,7 +614,7 @@ var Graticule = (function() {
             return;
         }
         this._currentExtent = extent;
-
+		//console.log(Cesium.Math.toDegrees(extent.west),Cesium.Math.toDegrees(extent.east),Cesium.Math.toDegrees(extent.south),Cesium.Math.toDegrees(extent.north));
         this._polylines.removeAll();
         this._specLines.removeAll();
         this._baseLines.removeAll();
@@ -630,18 +631,19 @@ var Graticule = (function() {
         for(index = 0; index < mins.length && dLat < ((extent.north - extent.south) / 10); index++) {
             dLat = mins[index];
         }
-		console.log(0,Cesium.Math.toDegrees(extent.west),Cesium.Math.toDegrees(extent.east))
+		//console.log(0,Cesium.Math.toDegrees(extent.west),Cesium.Math.toDegrees(extent.east))
 		//判断extent是否横跨180经线
-		if(extent.east>(Math.PI/2) && extent.east<Math.PI && extent.west<(-Math.PI/2) && extent.west>-Math.PI)
+		//if(extent.east>(Math.PI/2) && extent.east<Math.PI && extent.west<(-Math.PI/2) && extent.west>-Math.PI)
+		if(this._isCross===true)
 		//if( east_west > Cesium.Math.PI/2)
 		{
-			for(index = 0; index < mins.length && dLng < ((Math.PI*2 - extent.east + extent.west) / 10); index++) {
+			for(index = 0; index < mins.length && dLng < ((Math.PI*2 - extent.west + extent.east) / 10); index++) {
 				dLng = mins[index];
 			}
-			console.log(1,Cesium.Math.toDegrees(extent.west),Cesium.Math.toDegrees(extent.east));
-			var minLng = (extent.east < 0 ? Math.ceil(extent.east / dLng) : Math.floor(extent.east / dLng)) * dLng;
+			console.log(1,Cesium.Math.toDegrees(extent.west),Cesium.Math.toDegrees(extent.east),Cesium.Math.toDegrees(extent.south),Cesium.Math.toDegrees(extent.north));
+			var minLng = (extent.west < 0 ? Math.ceil(extent.east / dLng) : Math.floor(extent.east / dLng)) * dLng;
 			var minLat = (extent.south < 0 ? Math.ceil(extent.south / dLat) : Math.floor(extent.south / dLat)) * dLat;
-			var maxLng = (extent.west < 0 ? Math.ceil(extent.west / dLng) : Math.floor(extent.west / dLng)) * dLng;    
+			var maxLng = (extent.east < 0 ? Math.ceil(extent.west / dLng) : Math.floor(extent.west / dLng)) * dLng;    
 			var maxLat = (extent.north < 0 ? Math.ceil(extent.north / dLat) : Math.floor(extent.north / dLat)) * dLat;
 			
 			// extend to make sure we cover for non refresh of tiles
@@ -649,7 +651,7 @@ var Graticule = (function() {
 			maxLng = Math.min(maxLng + 2 * dLng, Math.PI);
 			minLat = Math.max(minLat - 2 * dLat, -Math.PI / 2);
 			maxLat = Math.min(maxLat + 2 * dLat, Math.PI / 2);
-			console.log(1,Cesium.Math.toDegrees(minLng),Cesium.Math.toDegrees(maxLng),Cesium.Math.toDegrees(dLng));
+			//console.log(1,Cesium.Math.toDegrees(minLng),Cesium.Math.toDegrees(maxLng),Cesium.Math.toDegrees(dLng));
 			
 			var ellipsoid = this._ellipsoid;
 			var lat, lng, granularity = Cesium.Math.toRadians(1);
@@ -733,11 +735,11 @@ var Graticule = (function() {
 			for(index = 0; index < mins.length && dLng < ((extent.east - extent.west) / 10); index++) {
 				dLng = mins[index];
 			}
-			//console.log(2,Cesium.Math.toDegrees(extent.west),Cesium.Math.toDegrees(extent.east));
+			console.log(2,Cesium.Math.toDegrees(extent.west),Cesium.Math.toDegrees(extent.east),Cesium.Math.toDegrees(extent.south),Cesium.Math.toDegrees(extent.north));
 			// round iteration limits to the computed grid interval
-			var minLng = (extent.west < 0 ? Math.ceil(extent.west / dLng) : Math.floor(extent.west / dLng)) * dLng;
+			var minLng = (Math.floor(extent.west / dLng)) * dLng;
 			var minLat = (extent.south < 0 ? Math.ceil(extent.south / dLat) : Math.floor(extent.south / dLat)) * dLat;
-			var maxLng = (extent.east < 0 ? Math.ceil(extent.east / dLng) : Math.floor(extent.east / dLng)) * dLng;    //原来这两行dling和dlat写反了，已经改回来了
+			var maxLng = (Math.ceil(extent.east / dLng)) * dLng;    //原来这两行dling和dlat写反了，已经改回来了
 			var maxLat = (extent.north < 0 ? Math.ceil(extent.north / dLat) : Math.floor(extent.north / dLat)) * dLat;
 
 			// extend to make sure we cover for non refresh of tiles
@@ -847,6 +849,7 @@ var Graticule = (function() {
 			//this.makeLabel(longitudeText, lat, this._sexagesimal ? this._decToSex(degLat) : degreeToText(degLat,dLat,'lat'), true);
 		}
 		//绘制基础经纬网end
+		console.log(this._isCross);
     };
 
     _.prototype.requestImage = function(x, y, level) {
@@ -898,6 +901,7 @@ var Graticule = (function() {
         ];
 		
 		if(corners[0]===undefined&&corners[3]===undefined&&corners[1]===undefined&&corners[2]===undefined){
+			this._isCross = false;
 			return Cesium.Rectangle.MAX_VALUE;
 		}
 		else if((!isCartesian3(corners[0])&&isCartesian3(corners[2]))||(!isCartesian3(corners[1])&&isCartesian3(corners[3]))){	
@@ -930,19 +934,16 @@ var Graticule = (function() {
 				center = camera.pickEllipsoid({x:(rightup.x+leftup.x)/2, y:y1}, this._ellipsoid);	
 			}
 			corners.push(center);
-			console.log(corners);
-			return Cesium.Rectangle.fromCartographicArray(this._ellipsoid.cartesianArrayToCartographicArray(corners));
+			//console.log(corners);
+			return cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));
+			//return Cesium.Rectangle.fromCartographicArray(this._ellipsoid.cartesianArrayToCartographicArray(corners));
 		}
 		else if(isCartesian3(corners[0])&&isCartesian3(corners[3])){
-<<<<<<< HEAD
-			crossTest(corners);
-			console.log('cross pass');
-=======
-			var extent = new wzlExtent(0,0,0,0);
-			extent = extent.from180ArrayTo360(this._ellipsoid.cartesianArrayToCartographicArray(corners));
-			console.log(extent.west*180/Math.PI,extent.east*180/Math.PI,extent.north*180/Math.PI,extent.south*180/Math.PI);
->>>>>>> graticule
-			return Cesium.Rectangle.fromCartographicArray(this._ellipsoid.cartesianArrayToCartographicArray(corners));
+			//var extent = new wzlExtent(0,0,0,0);
+			//extent = extent.from180ArrayTo360(this._ellipsoid.cartesianArrayToCartographicArray(corners));
+			//console.log(extent.west*180/Math.PI,extent.east*180/Math.PI,extent.north*180/Math.PI,extent.south*180/Math.PI);
+			//return extent;
+			return cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));//Cesium.Rectangle.fromCartographicArray(this._ellipsoid.cartesianArrayToCartographicArray(corners));
 		}
 		
 		
@@ -964,6 +965,7 @@ var Graticule = (function() {
                 return Cesium.Rectangle.MAX_VALUE;
             }
         } */
+		//this._isCross = false;
         return Cesium.Rectangle.MAX_VALUE;
     }
 	
@@ -997,16 +999,13 @@ var Graticule = (function() {
 		else return false;
 	}
 	
-	function crossTest(corners){
-		//var ellipsoid = this._ellipsoid;
-		var cartoArr = Cesium.Ellipsoid.WGS84.cartesianArrayToCartographicArray(corners);
-		if(cross180(cartoArr[0].longitude,cartoArr[2].longtitude)) console.log('leftup,leftdown cross 180');
-		console.log('cross test done');
-	}
-	function cross180(lon1,lon2){
-		var lon1back = (lon1>Math.PI/2&&lon1<Math.PI)||(lon1<-Math.PI/2&&lon1>-Math.PI);
-		if((lon1*lon2<0)&&(lon1back))
-			return true;
+	function crossTest(cartoArray){
+		//console.log(cartoArray);
+		//console.log(cartoArray[0].longitude * cartoArray[2].longitude);
+		if(cartoArray[0].longitude * cartoArray[2].longitude<0) return true;
+		else if(cartoArray[1].longitude * cartoArray[3].longtitude<0) return true;
+		else if(cartoArray[0].longitude * cartoArray[1].longtitude<0) return true;
+		else if(cartoArray[2].longitude * cartoArray[3].longtitude<0) return true;
 		return false;
 	}
 
@@ -1033,7 +1032,69 @@ var Graticule = (function() {
         var logging = document.getElementById('logging');
         logging.innerHTML += message;
     }
-	
+
+	function CartographicIn360(lon,lat){
+		this.longitude = lon;
+		this.latitude =lat;
+	}
+	function cartoToRect(cartoArray){
+		//console.log(cartoArray);
+		var arr360 = [];
+		var i=0;
+		if(Array.isArray(cartoArray)){
+			if(crossTest(cartoArray)){
+				this._isCross = true;
+				//console.log("cross test");
+				for(i=0;i<cartoArray.length;i++){
+					arr360.push(new CartographicIn360(toggleBF(cartoArray[i].longitude) , cartoArray[i].latitude));
+				}
+				//var extent = new wzlExtent(0,0,0,0);
+				var minlon =Math.PI;
+				var maxlon = -Math.PI;
+				var minlat = Math.PI/2;
+				var maxlat = -Math.PI/2;
+				for(i=0;i<cartoArray.length;i++){
+					if(arr360[i].longitude < minlon) minlon = arr360[i].longitude;
+					if(arr360[i].longitude > maxlon) maxlon = arr360[i].longitude;
+					if(arr360[i].latitude < minlat) minlat = arr360[i].latitude;
+					if(arr360[i].latitude > maxlat) maxlat = arr360[i].latitude;
+				}
+				//extent.west = minlon;
+				//extent.south = minlat;
+				//extent.east = maxlon;
+				//extent.north = maxlat;
+				var rect = new Cesium.Rectangle(toggleBF(minlon),minlat,toggleBF(maxlon),maxlat);
+				//console.log(rect.west*180/Math.PI,rect.east*180/Math.PI,rect.south*180/Math.PI,rect.north*180/Math.PI);
+				return rect;
+			}
+			else{
+				//console.log("regular rect");
+				this._isCross = false;
+				return Cesium.Rectangle.fromCartographicArray(cartoArray);
+			}
+			//console.log(arr360);
+			
+		}
+		return null;
+	}
+	function arrayIsInBack(cartoArray){
+		var count = 0;
+		if(Array.isArray(cartoArray)){
+			for(var i =0 ; i < cartoArray.length ; i++){
+				if(cartoArray[i].longitude<Math.PI/2 || cartoArray[i].longitude<-Math.PI/2)
+					count++;
+			}
+		}
+		if(count==4) return true;
+		return false;
+	}
+	function toggleBF(lon){
+		if(lon){
+			var longitude = lon>0 ? lon-Math.PI : lon+Math.PI;
+			return longitude;
+		}
+		return null;
+	}
     return _;
 
 })();
@@ -1049,47 +1110,4 @@ function drawGraticule()
 	graticule.setVisible(true);
 }
 
-<<<<<<< HEAD
-=======
-function wzlExtent(_west, _south, _east, _north){
-	this.west = _west; 
-	this.south = _south;
-	this.east = _east;
-	this.north = _north;
-	this.from180ArrayTo360 = from180ArrayTo360;
-}
-function CartographicIn360(lon,lat){
-	this.longitude = lon;
-	this.latitude =lat;
-}
-function from180ArrayTo360(cartoArray){
-	//console.log(cartoArray);
-	var arr360 = [];
-	var i=0;
-	if(Array.isArray(cartoArray)){
-		for(i=0;i<cartoArray.length;i++){
-			arr360.push(new CartographicIn360(cartoArray[i].longitude+Math.PI , cartoArray[i].latitude));
-			//arr360[i].longitude = cartoArray[i].longitude+180;
-			//arr360[i].latitude = cartoArray[i].latitude;
-		}
-		//console.log(arr360);
-		var extent = new wzlExtent(0,0,0,0);
-		var minlon =Math.PI*2;
-		var maxlon = 0;
-		var minlat = Math.PI/2;
-		var maxlat = -Math.PI/2;
-		for(i=0;i<cartoArray.length;i++){
-			if(arr360[i].longitude < minlon) minlon = arr360[i].longitude;
-			if(arr360[i].longitude > maxlon) maxlon = arr360[i].longitude;
-			if(arr360[i].latitude < minlat) minlat = arr360[i].latitude;
-			if(arr360[i].latitude > maxlat) maxlat = arr360[i].latitude;
-		}
-		extent.west = minlon;
-		extent.south = minlat;
-		extent.east = maxlon;
-		extent.north = maxlat;
-		return extent;
-	}
-	return null;
-}
->>>>>>> graticule
+
