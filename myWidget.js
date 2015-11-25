@@ -693,10 +693,16 @@ var Graticule = (function() {
 				// draw parallels
 				var path = [];
 				for(lng = minLng; lng < Cesium.Math.toRadians(180); lng += granularity) {
-					path.push(new Cesium.Cartographic(lng, lat))
-				}				
+					path.push(new Cesium.Cartographic(lng, lat));
+				}
+				path.push(new Cesium.Cartographic(Cesium.Math.toRadians(179.99999), lat));
+				this._polylines.add({
+					positions : ellipsoid.cartographicArrayToCartesianArray(path),
+					width: linewidth,
+				});
+				path = [];
 				for(lng = Cesium.Math.toRadians(-180); lng < maxLng; lng += granularity) {
-					path.push(new Cesium.Cartographic(lng, lat))
+					path.push(new Cesium.Cartographic(lng, lat));
 				}
 				path.push(new Cesium.Cartographic(maxLng, lat));
 				this._polylines.add({
@@ -712,20 +718,30 @@ var Graticule = (function() {
 			for(i in specLines)
 			{
 				//为什么material要加在循环里面才不会报错，否则会说object destroy？
-				var material = Cesium.Material.fromType('Color', {
+				var material1 = Cesium.Material.fromType('Color', {
+					color : new Cesium.Color(1.0, 1.0, 0.0, 1.0)
+				});
+				var material2 = Cesium.Material.fromType('Color', {
 					color : new Cesium.Color(1.0, 1.0, 0.0, 1.0)
 				});
 				var path = [];
 				for(lng = minLng; lng < Cesium.Math.toRadians(180); lng += granularity) {
 					path.push(new Cesium.Cartographic(lng, Cesium.Math.toRadians(specLines[i])));
-				}				
+				}	
+				path.push(new Cesium.Cartographic(Cesium.Math.toRadians(179.99999), Cesium.Math.toRadians(specLines[i])));
+				this._specLines.add({
+					positions : ellipsoid.cartographicArrayToCartesianArray(path),
+					material : material1,
+					width: 2,
+				});
+				path = [];
 				for(lng = Cesium.Math.toRadians(-180); lng < maxLng; lng += granularity) {
 					path.push(new Cesium.Cartographic(lng, Cesium.Math.toRadians(specLines[i])));
 				}
 				path.push(new Cesium.Cartographic(maxLng, Cesium.Math.toRadians(specLines[i])));
 				this._specLines.add({
 					positions : ellipsoid.cartographicArrayToCartesianArray(path),
-					material : material,
+					material : material2,
 					width: 2,
 				});
 				this.makeLabel4Spec(longitudeText+dLng, Cesium.Math.toRadians(specLines[i]), i, true);
@@ -935,7 +951,7 @@ var Graticule = (function() {
 			}
 			corners.push(center);
 			//console.log(corners);
-			return cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));
+			return this._cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));
 			//return Cesium.Rectangle.fromCartographicArray(this._ellipsoid.cartesianArrayToCartographicArray(corners));
 		}
 		else if(isCartesian3(corners[0])&&isCartesian3(corners[3])){
@@ -943,7 +959,7 @@ var Graticule = (function() {
 			//extent = extent.from180ArrayTo360(this._ellipsoid.cartesianArrayToCartographicArray(corners));
 			//console.log(extent.west*180/Math.PI,extent.east*180/Math.PI,extent.north*180/Math.PI,extent.south*180/Math.PI);
 			//return extent;
-			return cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));//Cesium.Rectangle.fromCartographicArray(this._ellipsoid.cartesianArrayToCartographicArray(corners));
+			return this._cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));//Cesium.Rectangle.fromCartographicArray(this._ellipsoid.cartesianArrayToCartographicArray(corners));
 		}
 		
 		
@@ -1001,12 +1017,17 @@ var Graticule = (function() {
 	
 	function crossTest(cartoArray){
 		//console.log(cartoArray);
-		//console.log(cartoArray[0].longitude * cartoArray[2].longitude);
-		if(cartoArray[0].longitude * cartoArray[2].longitude<0) return true;
-		else if(cartoArray[1].longitude * cartoArray[3].longtitude<0) return true;
-		else if(cartoArray[0].longitude * cartoArray[1].longtitude<0) return true;
-		else if(cartoArray[2].longitude * cartoArray[3].longtitude<0) return true;
-		return false;
+		//console.log('1 and 3:',cartoArray[1].longitude*180/Math.PI,cartoArray[3].longitude*180/Math.PI);
+		//console.log('1 * 3:',cartoArray[1].longitude*cartoArray[3].longitude);
+		var rect = Cesium.Rectangle.fromCartographicArray(cartoArray);
+		if(rect.east-rect.west>Math.PI) return true;
+/* 		var rect180 = Cesium.Rectangle.fromDegrees(179.999999999, -90.0, -180.0, 90.0);
+		var rectArray = Cesium.Rectangle.fromCartographicArray
+		if(cartoArray[0].longitude * cartoArray[2].longitude<0) {console.log('left');return true;}
+		else if(cartoArray[1].longitude * cartoArray[3].longitude<0) {console.log('right');return true;}
+		else if(cartoArray[0].longitude * cartoArray[1].longitude<0) {console.log('up');return true;}
+		else if(cartoArray[2].longitude * cartoArray[3].longitude<0) {console.log('down');return true;}
+		else return false; */
 	}
 
     var mins = [
@@ -1037,14 +1058,14 @@ var Graticule = (function() {
 		this.longitude = lon;
 		this.latitude =lat;
 	}
-	function cartoToRect(cartoArray){
+	_.prototype._cartoToRect = function(cartoArray){
 		//console.log(cartoArray);
 		var arr360 = [];
 		var i=0;
 		if(Array.isArray(cartoArray)){
 			if(crossTest(cartoArray)){
 				this._isCross = true;
-				//console.log("cross test");
+				//console.log("cross test：",this._isCross);
 				for(i=0;i<cartoArray.length;i++){
 					arr360.push(new CartographicIn360(toggleBF(cartoArray[i].longitude) , cartoArray[i].latitude));
 				}
