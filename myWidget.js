@@ -823,7 +823,7 @@ var Graticule = (function() {
 		}
 		
 		//绘制基础经纬网start
-		var ellipsoid = this._ellipsoid;
+/* 		var ellipsoid = this._ellipsoid;
 		var lat, lng, granularity = Cesium.Math.toRadians(1);
 		dLat = Cesium.Math.toRadians(10.0);
 		dLng = Cesium.Math.toRadians(10.0);
@@ -863,7 +863,7 @@ var Graticule = (function() {
 			});
 			var degLat = Cesium.Math.toDegrees(lat);
 			//this.makeLabel(longitudeText, lat, this._sexagesimal ? this._decToSex(degLat) : degreeToText(degLat,dLat,'lat'), true);
-		}
+		} */
 		//绘制基础经纬网end
 		console.log(this._isCross);
     };
@@ -904,6 +904,7 @@ var Graticule = (function() {
     _.prototype._getExtentView = function(){
         var camera = this._scene.camera ;
         var canvas = this._scene.canvas;
+		console.log('polartest',pointInWindow(this._scene,canvas));
 		var leftup = new Cesium.Cartesian2(0, 0);
 		var rightdown = new Cesium.Cartesian2(canvas.width, canvas.height);
 		var rightup = new Cesium.Cartesian2(canvas.width,0);
@@ -915,73 +916,93 @@ var Graticule = (function() {
             camera.pickEllipsoid(leftdown, this._ellipsoid),
             camera.pickEllipsoid(rightdown, this._ellipsoid)
         ];
-		
+		//if四个角未定义{else有角定义{if过极点{}else不过极点{判断天空可见不可见}}}
 		if(corners[0]===undefined&&corners[3]===undefined&&corners[1]===undefined&&corners[2]===undefined){
 			this._isCross = false;
 			return Cesium.Rectangle.MAX_VALUE;
 		}
-		else if((!isCartesian3(corners[0])&&isCartesian3(corners[2]))||(!isCartesian3(corners[1])&&isCartesian3(corners[3]))){	
-			//console.log('sky');
-			var y1 = leftup.y;
-			var y2 = leftdown.y;
-			// Define differences and error check
-			var sy = (y1 < y2) ? 1 : -1;
-			// Main loop
-			while (!isCartesian3(corners[0])&&!(y1==y2)) {
-				y1 += sy;
-				corners[0] = camera.pickEllipsoid({x:leftup.x, y:y1}, this._ellipsoid);	
+		else{
+			if(pointInWindow(this._scene,canvas)){
+				if((!isCartesian3(corners[0])&&isCartesian3(corners[2]))||(!isCartesian3(corners[1])&&isCartesian3(corners[3]))){	
+					var y1 = leftup.y;
+					var y2 = leftdown.y;
+					// Define differences and error check
+					var sy = (y1 < y2) ? 1 : -1;
+					// Main loop
+					while (!isCartesian3(corners[0])&&!(y1==y2)) {
+						y1 += sy;
+						corners[0] = camera.pickEllipsoid({x:leftup.x, y:y1}, this._ellipsoid);	
+					}
+					var y1 = rightup.y;
+
+					// Define differences and error check
+					var sy = (y1 < y2) ? 1 : -1;
+					// Main loop
+					while (!isCartesian3(corners[1])&&!(y1==y2)) {
+						y1 += sy;
+						corners[1] = camera.pickEllipsoid({x:rightup.x, y:y1}, this._ellipsoid);	
+					}
+					
+					var y1 = rightup.y;
+					var sy = (y1 < y2) ? 1 : -1;
+					var center = camera.pickEllipsoid({x:(rightup.x+leftup.x)/2, y:y1}, this._ellipsoid);
+					while (!isCartesian3(center)&&!(y1==y2)) {
+						y1 += sy;
+						center = camera.pickEllipsoid({x:(rightup.x+leftup.x)/2, y:y1}, this._ellipsoid);	
+					}
+					corners.push(center);
+					var rect = this._cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));
+					rect.north = Math.PI/2;
+					return rect;
+				}
+				else if(isCartesian3(corners[0])&&isCartesian3(corners[1])&&isCartesian3(corners[2])&&isCartesian3(corners[3])){
+					var rect = this._cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));
+					rect.north = Math.PI/2;
+					return rect;
+					//return this._cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));
+				}
 			}
-			var y1 = rightup.y;
-			//var y2 = rightdown.y;
-			// Define differences and error check
-			var sy = (y1 < y2) ? 1 : -1;
-			// Main loop
-			while (!isCartesian3(corners[1])&&!(y1==y2)) {
-				y1 += sy;
-				corners[1] = camera.pickEllipsoid({x:rightup.x, y:y1}, this._ellipsoid);	
+			else{
+				if((!isCartesian3(corners[0])&&isCartesian3(corners[2]))||(!isCartesian3(corners[1])&&isCartesian3(corners[3]))){	
+					var y1 = leftup.y;
+					var y2 = leftdown.y;
+					// Define differences and error check
+					var sy = (y1 < y2) ? 1 : -1;
+					// Main loop
+					while (!isCartesian3(corners[0])&&!(y1==y2)) {
+						y1 += sy;
+						corners[0] = camera.pickEllipsoid({x:leftup.x, y:y1}, this._ellipsoid);	
+					}
+					var y1 = rightup.y;
+
+					// Define differences and error check
+					var sy = (y1 < y2) ? 1 : -1;
+					// Main loop
+					while (!isCartesian3(corners[1])&&!(y1==y2)) {
+						y1 += sy;
+						corners[1] = camera.pickEllipsoid({x:rightup.x, y:y1}, this._ellipsoid);	
+					}
+					
+					var y1 = rightup.y;
+					var sy = (y1 < y2) ? 1 : -1;
+					var center = camera.pickEllipsoid({x:(rightup.x+leftup.x)/2, y:y1}, this._ellipsoid);
+					while (!isCartesian3(center)&&!(y1==y2)) {
+						y1 += sy;
+						center = camera.pickEllipsoid({x:(rightup.x+leftup.x)/2, y:y1}, this._ellipsoid);	
+					}
+					corners.push(center);
+					return this._cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));
+				}
+				else if(isCartesian3(corners[0])&&isCartesian3(corners[1])&&isCartesian3(corners[2])&&isCartesian3(corners[3])){
+					var center = camera.pickEllipsoid({x:(rightup.x+leftup.x)/2, y:leftup.y}, this._ellipsoid);
+					console.log('center',center);
+					corners.push(center);
+					return this._cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));
+				}
 			}
-			//console.log(corners);
-			
-			var y1 = rightup.y;
-			var sy = (y1 < y2) ? 1 : -1;
-			var center = camera.pickEllipsoid({x:(rightup.x+leftup.x)/2, y:y1}, this._ellipsoid);
-			while (!isCartesian3(center)&&!(y1==y2)) {
-				y1 += sy;
-				center = camera.pickEllipsoid({x:(rightup.x+leftup.x)/2, y:y1}, this._ellipsoid);	
-			}
-			corners.push(center);
-			//console.log(corners);
-			return this._cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));
-			//return Cesium.Rectangle.fromCartographicArray(this._ellipsoid.cartesianArrayToCartographicArray(corners));
-		}
-		else if(isCartesian3(corners[0])&&isCartesian3(corners[3])){
-			//var extent = new wzlExtent(0,0,0,0);
-			//extent = extent.from180ArrayTo360(this._ellipsoid.cartesianArrayToCartographicArray(corners));
-			//console.log(extent.west*180/Math.PI,extent.east*180/Math.PI,extent.north*180/Math.PI,extent.south*180/Math.PI);
-			//return extent;
-			return this._cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));//Cesium.Rectangle.fromCartographicArray(this._ellipsoid.cartesianArrayToCartographicArray(corners));
 		}
 		
 		
-        /* var corners = [
-            camera.pickEllipsoid(new Cesium.Cartesian2(0, 0), this._ellipsoid),
-            camera.pickEllipsoid(new Cesium.Cartesian2(canvas.width, 0), this._ellipsoid),
-            camera.pickEllipsoid(new Cesium.Cartesian2(0, canvas.height), this._ellipsoid),
-            camera.pickEllipsoid(new Cesium.Cartesian2(canvas.width, canvas.height), this._ellipsoid)
-        ];
-		if(corners[0]===undefined&&corners[3]===undefined){
-			console.log(corners[3] instanceof Cesium.Cartesian3);
-			return Cesium.Rectangle.MAX_VALUE;
-		}
-		else if(!(corners[0] instanceof Cesium.Cartesian3)&&(corners[3] instanceof Cesium.Cartesian3)){
-			//console.log(corners[3]);
-		} */
-/*         for(var index = 0; index < 4; index++) {
-            if(corners[index] === undefined) {
-                return Cesium.Rectangle.MAX_VALUE;
-            }
-        } */
-		//this._isCross = false;
         return Cesium.Rectangle.MAX_VALUE;
     }
 	
@@ -1016,18 +1037,9 @@ var Graticule = (function() {
 	}
 	
 	function crossTest(cartoArray){
-		//console.log(cartoArray);
-		//console.log('1 and 3:',cartoArray[1].longitude*180/Math.PI,cartoArray[3].longitude*180/Math.PI);
-		//console.log('1 * 3:',cartoArray[1].longitude*cartoArray[3].longitude);
 		var rect = Cesium.Rectangle.fromCartographicArray(cartoArray);
-		if(rect.east-rect.west>Math.PI) return true;
-/* 		var rect180 = Cesium.Rectangle.fromDegrees(179.999999999, -90.0, -180.0, 90.0);
-		var rectArray = Cesium.Rectangle.fromCartographicArray
-		if(cartoArray[0].longitude * cartoArray[2].longitude<0) {console.log('left');return true;}
-		else if(cartoArray[1].longitude * cartoArray[3].longitude<0) {console.log('right');return true;}
-		else if(cartoArray[0].longitude * cartoArray[1].longitude<0) {console.log('up');return true;}
-		else if(cartoArray[2].longitude * cartoArray[3].longitude<0) {console.log('down');return true;}
-		else return false; */
+		if(rect.east-rect.west>Math.PI) {return true;}
+		else return false;
 	}
 
     var mins = [
@@ -1041,7 +1053,6 @@ var Graticule = (function() {
         Cesium.Math.toRadians(10.0)
     ];
 
-	//var specLines = [66.5,23.5,0,-23.5,-66.5];
 	var specLines = {'北极圈' : 66.5,
 					 '北回归线' : 23.5,
 					 '赤道' : 0,
@@ -1059,17 +1070,14 @@ var Graticule = (function() {
 		this.latitude =lat;
 	}
 	_.prototype._cartoToRect = function(cartoArray){
-		//console.log(cartoArray);
 		var arr360 = [];
 		var i=0;
 		if(Array.isArray(cartoArray)){
 			if(crossTest(cartoArray)){
 				this._isCross = true;
-				//console.log("cross test：",this._isCross);
 				for(i=0;i<cartoArray.length;i++){
 					arr360.push(new CartographicIn360(toggleBF(cartoArray[i].longitude) , cartoArray[i].latitude));
 				}
-				//var extent = new wzlExtent(0,0,0,0);
 				var minlon =Math.PI;
 				var maxlon = -Math.PI;
 				var minlat = Math.PI/2;
@@ -1080,24 +1088,17 @@ var Graticule = (function() {
 					if(arr360[i].latitude < minlat) minlat = arr360[i].latitude;
 					if(arr360[i].latitude > maxlat) maxlat = arr360[i].latitude;
 				}
-				//extent.west = minlon;
-				//extent.south = minlat;
-				//extent.east = maxlon;
-				//extent.north = maxlat;
 				var rect = new Cesium.Rectangle(toggleBF(minlon),minlat,toggleBF(maxlon),maxlat);
-				//console.log(rect.west*180/Math.PI,rect.east*180/Math.PI,rect.south*180/Math.PI,rect.north*180/Math.PI);
 				return rect;
 			}
 			else{
-				//console.log("regular rect");
 				this._isCross = false;
 				return Cesium.Rectangle.fromCartographicArray(cartoArray);
-			}
-			//console.log(arr360);
-			
+			}	
 		}
 		return null;
 	}
+	
 	function arrayIsInBack(cartoArray){
 		var count = 0;
 		if(Array.isArray(cartoArray)){
@@ -1115,6 +1116,27 @@ var Graticule = (function() {
 			return longitude;
 		}
 		return null;
+	}
+	function pointInWindow(scene,canvas){
+		//var canvas = this._scene.canvas;
+		//console.log(canvas);
+		var carto = Cesium.Cartographic.fromDegrees(180, 90);
+		//console.log(carto);
+		var cartesian3 = Cesium.Ellipsoid.WGS84.cartographicToCartesian(carto);
+		//console.log(cartesian3);
+		var cartesian2 = Cesium.SceneTransforms.wgs84ToWindowCoordinates(scene, cartesian3);
+		//console.log(cartesian2);
+		var leftup = new Cesium.Cartesian2(0, 0);
+		var rightdown = new Cesium.Cartesian2(canvas.width, canvas.height);
+		var rightup = new Cesium.Cartesian2(canvas.width,0);
+		var leftdown = new Cesium.Cartesian2(0, canvas.height);
+		//console.log(leftdown);
+		var test1 = Cesium.pointInsideTriangle(cartesian2, leftup, rightup, rightdown);
+		var test2 = Cesium.pointInsideTriangle(cartesian2, leftup, leftdown, rightdown);
+		//console.log('upright triangle',test1);
+		//console.log('downleft triangle',test2);
+		if(test1===true||test2===true) return true;
+		else return false;
 	}
     return _;
 
