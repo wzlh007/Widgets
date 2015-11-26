@@ -462,12 +462,12 @@ var Graticule = (function() {
         scene.primitives.add(this._labels);
         this._polylines = new Cesium.PolylineCollection();
 		this._specLines = new Cesium.PolylineCollection();
-		this._baseLines = new Cesium.PolylineCollection();
+		//this._baseLines = new Cesium.PolylineCollection();
 		
 		//console.log('start');
         scene.primitives.add(this._polylines);
         scene.primitives.add(this._specLines);
-        scene.primitives.add(this._baseLines);
+        //scene.primitives.add(this._baseLines);
 		//console.log('end');
         this._ellipsoid = scene.globe.ellipsoid;
 		this._isCross = false;
@@ -617,7 +617,7 @@ var Graticule = (function() {
 		//console.log(Cesium.Math.toDegrees(extent.west),Cesium.Math.toDegrees(extent.east),Cesium.Math.toDegrees(extent.south),Cesium.Math.toDegrees(extent.north));
         this._polylines.removeAll();
         this._specLines.removeAll();
-        this._baseLines.removeAll();
+        //this._baseLines.removeAll();
         this._labels.removeAll();
 
         var minPixel = 0;
@@ -635,7 +635,6 @@ var Graticule = (function() {
 		//判断extent是否横跨180经线
 		//if(extent.east>(Math.PI/2) && extent.east<Math.PI && extent.west<(-Math.PI/2) && extent.west>-Math.PI)
 		if(this._isCross===true)
-		//if( east_west > Cesium.Math.PI/2)
 		{
 			for(index = 0; index < mins.length && dLng < ((Math.PI*2 - extent.west + extent.east) / 10); index++) {
 				dLng = mins[index];
@@ -695,7 +694,8 @@ var Graticule = (function() {
 				for(lng = minLng; lng < Cesium.Math.toRadians(180); lng += granularity) {
 					path.push(new Cesium.Cartographic(lng, lat));
 				}
-				path.push(new Cesium.Cartographic(Cesium.Math.toRadians(179.99999), lat));
+				path.pop();
+				path.push(new Cesium.Cartographic(Cesium.Math.toRadians(180), lat));
 				this._polylines.add({
 					positions : ellipsoid.cartographicArrayToCartesianArray(path),
 					width: linewidth,
@@ -727,8 +727,9 @@ var Graticule = (function() {
 				var path = [];
 				for(lng = minLng; lng < Cesium.Math.toRadians(180); lng += granularity) {
 					path.push(new Cesium.Cartographic(lng, Cesium.Math.toRadians(specLines[i])));
-				}	
-				path.push(new Cesium.Cartographic(Cesium.Math.toRadians(179.99999), Cesium.Math.toRadians(specLines[i])));
+				}
+				path.pop();
+				path.push(new Cesium.Cartographic(Cesium.Math.toRadians(180), Cesium.Math.toRadians(specLines[i])));
 				this._specLines.add({
 					positions : ellipsoid.cartographicArrayToCartesianArray(path),
 					material : material1,
@@ -865,7 +866,7 @@ var Graticule = (function() {
 			//this.makeLabel(longitudeText, lat, this._sexagesimal ? this._decToSex(degLat) : degreeToText(degLat,dLat,'lat'), true);
 		} */
 		//绘制基础经纬网end
-		console.log(this._isCross);
+		console.log('isCross:',this._isCross);
     };
 
     _.prototype.requestImage = function(x, y, level) {
