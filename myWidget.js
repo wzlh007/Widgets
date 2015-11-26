@@ -619,7 +619,7 @@ var Graticule = (function() {
         this._specLines.removeAll();
         //this._baseLines.removeAll();
         this._labels.removeAll();
-
+		console.log('this._polylines',this._polylines._polylines.length);
         var minPixel = 0;
         var maxPixel = this._canvasSize;
 
@@ -640,9 +640,9 @@ var Graticule = (function() {
 				dLng = mins[index];
 			}
 			console.log(1,Cesium.Math.toDegrees(extent.west),Cesium.Math.toDegrees(extent.east),Cesium.Math.toDegrees(extent.south),Cesium.Math.toDegrees(extent.north));
-			var minLng = (extent.west < 0 ? Math.ceil(extent.east / dLng) : Math.floor(extent.east / dLng)) * dLng;
+			var minLng = (extent.west < 0 ? Math.ceil(extent.west / dLng) : Math.floor(extent.west / dLng)) * dLng;
 			var minLat = (extent.south < 0 ? Math.ceil(extent.south / dLat) : Math.floor(extent.south / dLat)) * dLat;
-			var maxLng = (extent.east < 0 ? Math.ceil(extent.west / dLng) : Math.floor(extent.west / dLng)) * dLng;    
+			var maxLng = (extent.east < 0 ? Math.ceil(extent.east / dLng) : Math.floor(extent.east / dLng)) * dLng;    
 			var maxLat = (extent.north < 0 ? Math.ceil(extent.north / dLat) : Math.floor(extent.north / dLat)) * dLat;
 			
 			// extend to make sure we cover for non refresh of tiles
@@ -650,7 +650,7 @@ var Graticule = (function() {
 			maxLng = Math.min(maxLng + 2 * dLng, Math.PI);
 			minLat = Math.max(minLat - 2 * dLat, -Math.PI / 2);
 			maxLat = Math.min(maxLat + 2 * dLat, Math.PI / 2);
-			//console.log(1,Cesium.Math.toDegrees(minLng),Cesium.Math.toDegrees(maxLng),Cesium.Math.toDegrees(dLng));
+			console.log(1,Cesium.Math.toDegrees(minLng),Cesium.Math.toDegrees(maxLng),Cesium.Math.toDegrees(dLng));
 			
 			var ellipsoid = this._ellipsoid;
 			var lat, lng, granularity = Cesium.Math.toRadians(1);
@@ -694,13 +694,14 @@ var Graticule = (function() {
 				for(lng = minLng; lng < Cesium.Math.toRadians(180); lng += granularity) {
 					path.push(new Cesium.Cartographic(lng, lat));
 				}
-				path.pop();
+				//path.pop();
 				path.push(new Cesium.Cartographic(Cesium.Math.toRadians(180), lat));
 				this._polylines.add({
 					positions : ellipsoid.cartographicArrayToCartesianArray(path),
 					width: linewidth,
 				});
 				path = [];
+				//console.log(path.length);
 				for(lng = Cesium.Math.toRadians(-180); lng < maxLng; lng += granularity) {
 					path.push(new Cesium.Cartographic(lng, lat));
 				}
@@ -728,7 +729,7 @@ var Graticule = (function() {
 				for(lng = minLng; lng < Cesium.Math.toRadians(180); lng += granularity) {
 					path.push(new Cesium.Cartographic(lng, Cesium.Math.toRadians(specLines[i])));
 				}
-				path.pop();
+				//path.pop();
 				path.push(new Cesium.Cartographic(Cesium.Math.toRadians(180), Cesium.Math.toRadians(specLines[i])));
 				this._specLines.add({
 					positions : ellipsoid.cartographicArrayToCartesianArray(path),
@@ -752,7 +753,7 @@ var Graticule = (function() {
 			for(index = 0; index < mins.length && dLng < ((extent.east - extent.west) / 10); index++) {
 				dLng = mins[index];
 			}
-			console.log(2,Cesium.Math.toDegrees(extent.west),Cesium.Math.toDegrees(extent.east),Cesium.Math.toDegrees(extent.south),Cesium.Math.toDegrees(extent.north));
+			//console.log(2,Cesium.Math.toDegrees(extent.west),Cesium.Math.toDegrees(extent.east),Cesium.Math.toDegrees(extent.south),Cesium.Math.toDegrees(extent.north));
 			// round iteration limits to the computed grid interval
 			var minLng = (Math.floor(extent.west / dLng)) * dLng;
 			var minLat = (extent.south < 0 ? Math.ceil(extent.south / dLat) : Math.floor(extent.south / dLat)) * dLat;
@@ -764,7 +765,7 @@ var Graticule = (function() {
 			maxLng = Math.min(maxLng + 2 * dLng, Math.PI);
 			minLat = Math.max(minLat - 2 * dLat, -Math.PI / 2);
 			maxLat = Math.min(maxLat + 2 * dLat, Math.PI / 2);
-			//console.log(2,Cesium.Math.toDegrees(minLng),Cesium.Math.toDegrees(maxLng),Cesium.Math.toDegrees(dLng));
+			console.log(2,Cesium.Math.toDegrees(minLng),Cesium.Math.toDegrees(maxLng),Cesium.Math.toDegrees(dLng));
 			var ellipsoid = this._ellipsoid;
 			var lat, lng, granularity = Cesium.Math.toRadians(1);
 
@@ -866,7 +867,7 @@ var Graticule = (function() {
 			//this.makeLabel(longitudeText, lat, this._sexagesimal ? this._decToSex(degLat) : degreeToText(degLat,dLat,'lat'), true);
 		} */
 		//绘制基础经纬网end
-		console.log('isCross:',this._isCross);
+		console.log('this._polylines2',this._polylines.length);
     };
 
     _.prototype.requestImage = function(x, y, level) {
@@ -905,7 +906,7 @@ var Graticule = (function() {
     _.prototype._getExtentView = function(){
         var camera = this._scene.camera ;
         var canvas = this._scene.canvas;
-		console.log('polartest',pointInWindow(this._scene,canvas));
+		//console.log('polartest',pointInWindow(this._scene,canvas));
 		var leftup = new Cesium.Cartesian2(0, 0);
 		var rightdown = new Cesium.Cartesian2(canvas.width, canvas.height);
 		var rightup = new Cesium.Cartesian2(canvas.width,0);
@@ -954,11 +955,15 @@ var Graticule = (function() {
 					corners.push(center);
 					var rect = this._cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));
 					rect.north = Math.PI/2;
+					rect.west = -Math.PI;
+					rect.east = Math.PI;
 					return rect;
 				}
 				else if(isCartesian3(corners[0])&&isCartesian3(corners[1])&&isCartesian3(corners[2])&&isCartesian3(corners[3])){
 					var rect = this._cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));
 					rect.north = Math.PI/2;
+					rect.west = -Math.PI;
+					rect.east = Math.PI;
 					return rect;
 					//return this._cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));
 				}
@@ -996,7 +1001,7 @@ var Graticule = (function() {
 				}
 				else if(isCartesian3(corners[0])&&isCartesian3(corners[1])&&isCartesian3(corners[2])&&isCartesian3(corners[3])){
 					var center = camera.pickEllipsoid({x:(rightup.x+leftup.x)/2, y:leftup.y}, this._ellipsoid);
-					console.log('center',center);
+					//console.log('center',center);
 					corners.push(center);
 					return this._cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));
 				}
