@@ -51,7 +51,7 @@ function myWidget(viewer,scene,ellipsoid)
 				
 				var cameraheight0 = this.getcamera().carto.height;
 				this.zoomRate = cameraheight0/10;
-				var cameraheight = cameraheight0.toFixed(0);
+				//var cameraheight = cameraheight0.toFixed(0);
 				var positions =[positionCartographic];
 				var promise = Cesium.sampleTerrain(terrainProvider, 9, positions);  
 				promise.then(function() {
@@ -68,7 +68,10 @@ function myWidget(viewer,scene,ellipsoid)
 				
 				document.getElementById("long").innerHTML="经度: "+longitudeString;
 				document.getElementById("lat").innerHTML="    \t纬度: "+latitudeString;
-				document.getElementById("viewheight").innerHTML="    \t视角高程: "+cameraheight+' 米';
+				if(cameraheight0>1000)
+					document.getElementById("viewheight").innerHTML= "    \t视角高程: "+(cameraheight0/1000).toFixed(2)+" 公里";
+				else document.getElementById("viewheight").innerHTML= "    \t视角高程: "+cameraheight0.toFixed(0)+" 米";
+				//document.getElementById("viewheight").innerHTML="    \t视角高程: "+cameraheight+' 米';
 				
 			} else {
 				document.getElementById("long").innerHTML="经度：";
@@ -82,13 +85,18 @@ function myWidget(viewer,scene,ellipsoid)
 		handler.setInputAction(function() {
 			var cameraheight0 = this.getcamera().carto.height;
 			this.zoomRate = cameraheight0/10;
-			var cameraheight = cameraheight0.toFixed(0);
+			//var cameraheight = cameraheight0.toFixed(0);
 			//console.log(this.zoomRate);
-			document.getElementById("viewheight").innerHTML="    \t视角高程: "+cameraheight+' 米';
+			if(cameraheight0>1000)
+				document.getElementById("viewheight").innerHTML= "    \t视角高程: "+(cameraheight0/1000).toFixed(2)+" 公里";
+			else document.getElementById("viewheight").innerHTML= "    \t视角高程: "+cameraheight0.toFixed(0)+" 米";
 		}, Cesium.ScreenSpaceEventType.WHEEL);
 		
-		var cameraheight = this.getcamera().carto.height.toFixed(0);
-		document.getElementById("viewheight").innerHTML="    \t视角高程: "+cameraheight+' 米';
+		var cameraheight0 = this.getcamera().carto.height;
+		if(cameraheight0>1000)
+			document.getElementById("viewheight").innerHTML= "    \t视角高程: "+(cameraheight0/1000).toFixed(2)+" 公里";
+		else document.getElementById("viewheight").innerHTML= "    \t视角高程: "+cameraheight0.toFixed(0)+" 米";
+		//document.getElementById("viewheight").innerHTML="    \t视角高程: "+cameraheight+' 米';
 	}
 //当前相机信息获取
 	function getcamera()
@@ -462,11 +470,13 @@ var Graticule = (function() {
         scene.primitives.add(this._labels);
         this._polylines = new Cesium.PolylineCollection();
 		this._specLines = new Cesium.PolylineCollection();
+		this._specLines2 = new Cesium.PolylineCollection();
 		this._baseLines = new Cesium.PolylineCollection();
 		
 		//console.log('start');
         scene.primitives.add(this._polylines);
         scene.primitives.add(this._specLines);
+        scene.primitives.add(this._specLines2);
         scene.primitives.add(this._baseLines);
 		//console.log('end');
         this._ellipsoid = scene.globe.ellipsoid;
@@ -617,6 +627,7 @@ var Graticule = (function() {
 		//console.log(Cesium.Math.toDegrees(extent.west),Cesium.Math.toDegrees(extent.east),Cesium.Math.toDegrees(extent.south),Cesium.Math.toDegrees(extent.north));
         this._polylines.removeAll();
         this._specLines.removeAll();
+        this._specLines2.removeAll();
         this._baseLines.removeAll();
         this._labels.removeAll();
 		console.log('this._polylines',this._polylines._polylines.length);
@@ -669,7 +680,9 @@ var Graticule = (function() {
 					width: linewidth
 				});
 				var degLng = Cesium.Math.toDegrees(lng);
-				this.makeLabel(lng, latitudeText, this._sexagesimal ? this._decToSex(degLng) : degreeToText(degLng,dLng,'lon'), false);
+				if(!(around(degLng,0,0.01)||around(degLng,180,0.01)||around(degLng,-180,0.01))){
+					this.makeLabel(lng, latitudeText, this._sexagesimal ? this._decToSex(degLng) : degreeToText(degLng,dLng,'lon'), false);
+				}
 			}
 			for(lng = Cesium.Math.toRadians(-180); lng <maxLng ; lng += dLng) {
 				// draw meridian
@@ -683,7 +696,7 @@ var Graticule = (function() {
 					width: linewidth
 				});
 				var degLng = Cesium.Math.toDegrees(lng);
-				this.makeLabel(lng, latitudeText, this._sexagesimal ? this._decToSex(degLng) : degreeToText(degLng,dLng,'lon'), false);
+				if(!(around(degLng,0,0.01)||around(degLng,180,0.01)||around(degLng,-180,0.01))) this.makeLabel(lng, latitudeText, this._sexagesimal ? this._decToSex(degLng) : degreeToText(degLng,dLng,'lon'), false);
 			}
 			//画纬线
 			var longitudeText = minLng + Math.floor((Math.PI*2+(maxLng - minLng)) / dLng / 2) * dLng;
@@ -711,6 +724,7 @@ var Graticule = (function() {
 					width: linewidth,
 				});
 				var degLat = Cesium.Math.toDegrees(lat);
+				if(!(around(degLat,0,0.01)))
 				this.makeLabel(longitudeText, lat, this._sexagesimal ? this._decToSex(degLat) : degreeToText(degLat,dLat,'lat'), true);
 				//console.log(Cesium.Math.toDegrees(longitudeText));
 			}
@@ -744,9 +758,28 @@ var Graticule = (function() {
 				this._specLines.add({
 					positions : ellipsoid.cartographicArrayToCartesianArray(path),
 					material : material2,
-					width: 2,
+					width: 2
 				});
 				this.makeLabel4Spec(longitudeText+dLng, Cesium.Math.toRadians(specLines[i]), i, true);
+			}
+			//特殊经纬线2
+			for(i in specLines2)
+			{
+				//为什么material要加在循环里面才不会报错，否则会说object destroy？
+				var material2 = Cesium.Material.fromType('Color', {
+					color : new Cesium.Color(1.0, 1.0, 0.0, 1.0)
+				});
+				var path = [];
+				for(lat = minLat; lat < maxLat; lat += granularity) {
+					path.push(new Cesium.Cartographic(Cesium.Math.toRadians(specLines2[i]), lat))
+				}
+				path.push(new Cesium.Cartographic(Cesium.Math.toRadians(specLines2[i]), maxLat));
+				this._specLines2.add({
+					positions : ellipsoid.cartographicArrayToCartesianArray(path),
+					material : material2,
+					width: 2
+				});
+				this.makeLabel4Spec(Cesium.Math.toRadians(specLines2[i]),latitudeText, i, false);
 			}
 		}
 		else{
@@ -783,7 +816,7 @@ var Graticule = (function() {
 					width: linewidth
 				});
 				var degLng = Cesium.Math.toDegrees(lng);
-				this.makeLabel(lng, latitudeText, this._sexagesimal ? this._decToSex(degLng) : degreeToText(degLng,dLng,'lon'), false);
+				if(!(around(degLng,0,0.01)||around(degLng,180,0.01)||around(degLng,-180,0.01))) this.makeLabel(lng, latitudeText, this._sexagesimal ? this._decToSex(degLng) : degreeToText(degLng,dLng,'lon'), false);
 			}
 			
 			// lats
@@ -800,6 +833,7 @@ var Graticule = (function() {
 					width: linewidth,
 				});
 				var degLat = Cesium.Math.toDegrees(lat);
+				if(!(around(degLat,0,0.01)))
 				this.makeLabel(longitudeText, lat, this._sexagesimal ? this._decToSex(degLat) : degreeToText(degLat,dLat,'lat'), true);
 			}
 			
@@ -818,9 +852,28 @@ var Graticule = (function() {
 				this._specLines.add({
 					positions : ellipsoid.cartographicArrayToCartesianArray(path),
 					material : material,
-					width: 2,
+					width: 2
 				});
 				this.makeLabel4Spec((minLng+maxLng)/2-granularity, Cesium.Math.toRadians(specLines[i]), i, true);
+			}
+			//特殊经纬线2
+			for(i in specLines2)
+			{
+				//为什么material要加在循环里面才不会报错，否则会说object destroy？
+				var material2 = Cesium.Material.fromType('Color', {
+					color : new Cesium.Color(1.0, 1.0, 0.0, 1.0)
+				});
+				var path = [];
+				for(lat = minLat; lat < maxLat; lat += granularity) {
+					path.push(new Cesium.Cartographic(Cesium.Math.toRadians(specLines2[i]), lat))
+				}
+				path.push(new Cesium.Cartographic(Cesium.Math.toRadians(specLines2[i]), maxLat));
+				this._specLines2.add({
+					positions : ellipsoid.cartographicArrayToCartesianArray(path),
+					material : material2,
+					width: 2
+				});
+				this.makeLabel4Spec(Cesium.Math.toRadians(specLines2[i]),latitudeText, i, false);
 			}
 		}
 		
@@ -873,6 +926,7 @@ var Graticule = (function() {
 		console.log('this._labels',this._labels.length);
 		console.log('this._specLines',this._specLines.length);
 		console.log('this._baseLines',this._baseLines.length);
+		console.log('this._specLines2',this._specLines2.length);
 		
     };
 
@@ -1073,6 +1127,10 @@ var Graticule = (function() {
 					 '南回归线' : -23.5,
 					 '南极圈' : -66.5
 					 };
+	var specLines2 = {
+		'本初子午线':0,
+		'逆子午线':180
+	};
 	
     function loggingMessage(message) {
         var logging = document.getElementById('logging');
@@ -1150,6 +1208,11 @@ var Graticule = (function() {
 		//console.log('upright triangle',test1);
 		//console.log('downleft triangle',test2);
 		if(test1===true||test2===true) return true;
+		else return false;
+	}
+	
+	function around(num,ref,d){
+		if(num>ref-d&&num<ref+d) return true;
 		else return false;
 	}
 	
