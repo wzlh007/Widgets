@@ -462,12 +462,12 @@ var Graticule = (function() {
         scene.primitives.add(this._labels);
         this._polylines = new Cesium.PolylineCollection();
 		this._specLines = new Cesium.PolylineCollection();
-		//this._baseLines = new Cesium.PolylineCollection();
+		this._baseLines = new Cesium.PolylineCollection();
 		
 		//console.log('start');
         scene.primitives.add(this._polylines);
         scene.primitives.add(this._specLines);
-        //scene.primitives.add(this._baseLines);
+        scene.primitives.add(this._baseLines);
 		//console.log('end');
         this._ellipsoid = scene.globe.ellipsoid;
 		this._isCross = false;
@@ -617,7 +617,7 @@ var Graticule = (function() {
 		//console.log(Cesium.Math.toDegrees(extent.west),Cesium.Math.toDegrees(extent.east),Cesium.Math.toDegrees(extent.south),Cesium.Math.toDegrees(extent.north));
         this._polylines.removeAll();
         this._specLines.removeAll();
-        //this._baseLines.removeAll();
+        this._baseLines.removeAll();
         this._labels.removeAll();
 		console.log('this._polylines',this._polylines._polylines.length);
         var minPixel = 0;
@@ -825,7 +825,7 @@ var Graticule = (function() {
 		}
 		
 		//绘制基础经纬网start
-/* 		var ellipsoid = this._ellipsoid;
+ 		var ellipsoid = this._ellipsoid;
 		var lat, lng, granularity = Cesium.Math.toRadians(1);
 		dLat = Cesium.Math.toRadians(10.0);
 		dLng = Cesium.Math.toRadians(10.0);
@@ -865,9 +865,15 @@ var Graticule = (function() {
 			});
 			var degLat = Cesium.Math.toDegrees(lat);
 			//this.makeLabel(longitudeText, lat, this._sexagesimal ? this._decToSex(degLat) : degreeToText(degLat,dLat,'lat'), true);
-		} */
+		} 
 		//绘制基础经纬网end
-		console.log('this._polylines2',this._polylines.length);
+		console.log('south polar',pointInWindow(this._scene,this._scene.canvas,180,-90));
+		console.log('north polar',pointInWindow(this._scene,this._scene.canvas,180,90));
+		console.log('this._polylines',this._polylines.length);
+		console.log('this._labels',this._labels.length);
+		console.log('this._specLines',this._specLines.length);
+		console.log('this._baseLines',this._baseLines.length);
+		
     };
 
     _.prototype.requestImage = function(x, y, level) {
@@ -906,7 +912,7 @@ var Graticule = (function() {
     _.prototype._getExtentView = function(){
         var camera = this._scene.camera ;
         var canvas = this._scene.canvas;
-		//console.log('polartest',pointInWindow(this._scene,canvas));
+		
 		var leftup = new Cesium.Cartesian2(0, 0);
 		var rightdown = new Cesium.Cartesian2(canvas.width, canvas.height);
 		var rightup = new Cesium.Cartesian2(canvas.width,0);
@@ -924,7 +930,8 @@ var Graticule = (function() {
 			return Cesium.Rectangle.MAX_VALUE;
 		}
 		else{
-			if(pointInWindow(this._scene,canvas)){
+			if(false){
+			//if(pointInWindow(this._scene,canvas,180,90)){//||pointInWindow(this._scene,canvas,180,-90)//暂时先不加南极点检测，而且北极点检测会影响南半球的经纬网显示
 				if((!isCartesian3(corners[0])&&isCartesian3(corners[2]))||(!isCartesian3(corners[1])&&isCartesian3(corners[3]))){	
 					var y1 = leftup.y;
 					var y2 = leftdown.y;
@@ -954,14 +961,16 @@ var Graticule = (function() {
 					}
 					corners.push(center);
 					var rect = this._cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));
-					rect.north = Math.PI/2;
+					if(pointInWindow(this._scene,canvas,180,90)) rect.north = Math.PI/2;
+					else if(pointInWindow(this._scene,canvas,180,-90)) rect.south = -Math.PI/2;
 					rect.west = -Math.PI;
 					rect.east = Math.PI;
 					return rect;
 				}
 				else if(isCartesian3(corners[0])&&isCartesian3(corners[1])&&isCartesian3(corners[2])&&isCartesian3(corners[3])){
 					var rect = this._cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));
-					rect.north = Math.PI/2;
+					if(pointInWindow(this._scene,canvas,180,90)) {rect.north = Math.PI/2;console.log(rect.north*180/Math.PI);}
+					else if(pointInWindow(this._scene,canvas,180,-90)) {rect.south = -Math.PI/2;console.log(rect.south*180/Math.PI);}
 					rect.west = -Math.PI;
 					rect.east = Math.PI;
 					return rect;
@@ -1007,7 +1016,6 @@ var Graticule = (function() {
 				}
 			}
 		}
-		
 		
         return Cesium.Rectangle.MAX_VALUE;
     }
@@ -1123,10 +1131,10 @@ var Graticule = (function() {
 		}
 		return null;
 	}
-	function pointInWindow(scene,canvas){
+	function pointInWindow(scene,canvas,lon,lat){
 		//var canvas = this._scene.canvas;
 		//console.log(canvas);
-		var carto = Cesium.Cartographic.fromDegrees(180, 90);
+		var carto = Cesium.Cartographic.fromDegrees(lon, lat);
 		//console.log(carto);
 		var cartesian3 = Cesium.Ellipsoid.WGS84.cartographicToCartesian(carto);
 		//console.log(cartesian3);
@@ -1144,6 +1152,7 @@ var Graticule = (function() {
 		if(test1===true||test2===true) return true;
 		else return false;
 	}
+	
     return _;
 
 })();
