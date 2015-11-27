@@ -118,18 +118,22 @@ function myWidget(viewer,scene,ellipsoid)
 	//显示比例尺
 	function showScalebar(){
 		var cesiumContainer = document.getElementById("cesiumContainer");
-		var barHTML="<svg width=\"100px\" height=\"20px\" version=\"1.1\"\
-			xmlns=\"http://www.w3.org/2000/svg\">\
-			<line x1=\"5\" y1=\"20\" x2=\"95\" y2=\"20\"\
-			style=\"stroke:rgb(255,255,255);stroke-width:2\"/>\
-			<line x1=\"5\" y1=\"5\" x2=\"5\" y2=\"20\"\
-			style=\"stroke:rgb(255,255,255);stroke-width:2\"/>\
-			<line x1=\"95\" y1=\"5\" x2=\"95\" y2=\"20\"\
-			style=\"stroke:rgb(255,255,255);stroke-width:2\"/></svg>"
+		var barWidth = 100;//等于 lineWidth + svgpadding * 2
+		var barHeight = 20;
+		var lineWidth = 90;
+		var svgpadding = 5;
+		var barHTML='<svg id=\"svgscalebar\" width=\"'+barWidth+'px\" height=\"'+barHeight+'px\" version=\"1.1\"'+
+			'xmlns=\"http://www.w3.org/2000/svg\">'+
+			'<line x1=\"'+svgpadding+'\" y1=\"'+barHeight+'\" x2=\"'+(lineWidth+svgpadding)+'\" y2=\"'+barHeight+'\"'+
+			'style=\"stroke:rgb(255,255,255);stroke-width:2\"/>'+
+			'<line x1=\"'+svgpadding+'\" y1=\"'+svgpadding+'\" x2=\"'+svgpadding+'\" y2=\"'+barHeight+'\"'+
+			'style=\"stroke:rgb(255,255,255);stroke-width:2\"/>'+
+			'<line x1=\"'+(lineWidth+svgpadding)+'\" y1=\"'+svgpadding+'\" x2=\"'+(lineWidth+svgpadding)+'\" y2=\"'+barHeight+'\"'+
+			'style=\"stroke:rgb(255,255,255);stroke-width:2\"/></svg>'
 		var scaleContainer = document.createElement('div');
 		scaleContainer.className = 'scalebar';
 		scaleContainer.setAttribute('id','scaleContainer');
-		scaleContainer.setAttribute('style','width:100px');
+		scaleContainer.setAttribute('style','width:'+barWidth+'px');
 		cesiumContainer.appendChild(scaleContainer);
 		document.getElementById("scaleContainer").innerHTML=barHTML;
 		
@@ -146,11 +150,22 @@ function myWidget(viewer,scene,ellipsoid)
 		var cesiumheight = document.getElementById("cesiumContainer").clientHeight;
 		var scaleConWidth = document.getElementById("scaleContainer").clientWidth;
 		var scaleConHeight = document.getElementById("scaleContainer").clientHeight;
-		var windowleft =new Cesium.Cartesian2(cesiumwidth-scaleConWidth-10-10-1-95,cesiumheight-80-7-1);//如何获取svg长度
-		var windowright =new Cesium.Cartesian2(cesiumwidth-scaleConWidth-10-1-5-10,cesiumheight-80-7-1);
+		
+		var paddingleft = this.getNum(this.getStyle(scaletext,'padding-left'));console.log('paddingleft',paddingleft);
+		var paddingbottom = this.getNum(this.getStyle(scaletext,'padding-bottom'));console.log('paddingbottom',paddingbottom);
+		var right = this.getNum(this.getStyle(scaletext,'right'));console.log('right',right);
+		var bottom = this.getNum(this.getStyle(scaletext,'bottom'));console.log('bottom',bottom);
+		var borderwidth = this.getNum(this.getStyle(scaletext,'border-width'));console.log('borderwidth',borderwidth);
+		
+		//var windowleft =new Cesium.Cartesian2(cesiumwidth-scaleConWidth-10-10-1-95,cesiumheight-80-7-1);//如何获取svg长度
+		var windowleft =new Cesium.Cartesian2(cesiumwidth-scaleConWidth-right-paddingleft-borderwidth-lineWidth-svgpadding,cesiumheight-bottom-paddingbottom-borderwidth);
+		console.log(windowleft);
+		//var windowright =new Cesium.Cartesian2(cesiumwidth-scaleConWidth-10-1-5-10,cesiumheight-80-7-1);
+		var windowright = new Cesium.Cartesian2(cesiumwidth-scaleConWidth-right-borderwidth-svgpadding-paddingleft,cesiumheight-bottom-paddingbottom-borderwidth);
+		console.log(windowright);
 		var scaleString = '';
 		
-		handler = new Cesium.ScreenSpaceEventHandler(this.viewer.scene.canvas);
+/*		handler = new Cesium.ScreenSpaceEventHandler(this.viewer.scene.canvas);
 		this.viewer.camera.moveStart.addEventListener(function() {
 			labelmove=true;
 		});
@@ -158,6 +173,24 @@ function myWidget(viewer,scene,ellipsoid)
 		this.viewer.camera.moveEnd.addEventListener(function() {
 			labelmove=false;
 		});
+		
+ 		handler.setInputAction(function() {
+		if(labelmove==true){
+			var ray1 = this.viewer.camera.getPickRay(windowleft);
+			var position1 = this.scene.globe.pick(ray1, this.scene);
+			var ray2 = this.viewer.camera.getPickRay(windowright);
+			var position2 = this.scene.globe.pick(ray2, this.scene);
+			if(position1&&position2){
+				var distance = Cesium.Cartesian3.distance(position1,position2)
+				if(distance>3000)
+				document.getElementById("scaletext").innerHTML= (distance/1000).toFixed(0)+" 公里";
+				else document.getElementById("scaletext").innerHTML= distance.toFixed(0)+" 米";
+			}
+			else document.getElementById("scaletext").innerHTML="比例尺";
+
+			}
+
+		}, Cesium.ScreenSpaceEventType.WHEEL);
 		
 		handler.setInputAction(function(movement) {
 		if(labelmove==true){
@@ -175,25 +208,33 @@ function myWidget(viewer,scene,ellipsoid)
 
 			}
 
-		}, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+		}, Cesium.ScreenSpaceEventType.MOUSE_MOVE); */
 		
-		handler.setInputAction(function() {
-		if(labelmove==true){
-			var ray1 = this.viewer.camera.getPickRay(windowleft);
-			var position1 = this.scene.globe.pick(ray1, this.scene);
-			var ray2 = this.viewer.camera.getPickRay(windowright);
-			var position2 = this.scene.globe.pick(ray2, this.scene);
-			if(position1&&position2){
-				var distance = Cesium.Cartesian3.distance(position1,position2)
-				if(distance>3000)
-				document.getElementById("scaletext").innerHTML= (distance/1000).toFixed(0)+" 公里";
-				else document.getElementById("scaletext").innerHTML= distance.toFixed(0)+" 米";
-			}
-			else document.getElementById("scaletext").innerHTML="比例尺";
+		var viewchanged;
+		this.viewer.camera.moveStart.addEventListener(function() {
+			viewchanged=true;
+		});
 
-			}
+		this.viewer.camera.moveEnd.addEventListener(function() {
+			viewchanged=false;
+		});
+		this.viewer.clock.onTick.addEventListener(function(clock) {
+			if(viewchanged){
+				var ray1 = this.viewer.camera.getPickRay(windowleft);
+				var position1 = this.scene.globe.pick(ray1, this.scene);
+				var ray2 = this.viewer.camera.getPickRay(windowright);
+				var position2 = this.scene.globe.pick(ray2, this.scene);
+				if(position1&&position2){
+					var distance = Cesium.Cartesian3.distance(position1,position2)
+					if(distance>3000)
+					document.getElementById("scaletext").innerHTML= (distance/1000).toFixed(0)+" 公里";
+					else document.getElementById("scaletext").innerHTML= distance.toFixed(0)+" 米";
+				}
+				else document.getElementById("scaletext").innerHTML="比例尺";
 
-		}, Cesium.ScreenSpaceEventType.WHEEL);
+				}
+			
+		})
 		
 	  }
 	//指北针罗盘
