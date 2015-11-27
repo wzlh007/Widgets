@@ -30,7 +30,8 @@
 	myWidget.showScalebar();
 	myWidget.doCompass();
 	myWidget.doNavi();
-	myWidget.drawGraticule();
+	var graticule = myWidget.drawGraticule();
+	graticule.setVisible(true);
 	//myWidget.drawSpecLines();
 	
 	//var graticule = new Graticule({
