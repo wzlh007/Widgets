@@ -924,7 +924,7 @@ var Graticule = (function() {
 			return Cesium.Rectangle.MAX_VALUE;
 		}
 		else{
-			if(pointInWindow(this._scene,canvas)){
+			if(false){
 				if((!isCartesian3(corners[0])&&isCartesian3(corners[2]))||(!isCartesian3(corners[1])&&isCartesian3(corners[3]))){	
 					var y1 = leftup.y;
 					var y2 = leftdown.y;
@@ -997,12 +997,40 @@ var Graticule = (function() {
 						center = camera.pickEllipsoid({x:(rightup.x+leftup.x)/2, y:y1}, this._ellipsoid);	
 					}
 					corners.push(center);
+					if(pointInWindow(this._scene,canvas,180,90)){
+						var rect = this._cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));
+						rect.north = Math.PI/2;
+						rect.west = -Math.PI;
+						rect.east = Math.PI;
+						return rect;
+					}
+					else if(pointInWindow(this._scene,canvas,180,-90)){
+						var rect = this._cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));
+						rect.south = -Math.PI/2;
+						rect.west = -Math.PI;
+						rect.east = Math.PI;
+						return rect;
+					}
 					return this._cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));
 				}
 				else if(isCartesian3(corners[0])&&isCartesian3(corners[1])&&isCartesian3(corners[2])&&isCartesian3(corners[3])){
 					var center = camera.pickEllipsoid({x:(rightup.x+leftup.x)/2, y:leftup.y}, this._ellipsoid);
 					//console.log('center',center);
 					corners.push(center);
+					if(pointInWindow(this._scene,canvas,180,90)){
+						var rect = this._cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));
+						rect.north = Math.PI/2;
+						rect.west = -Math.PI;
+						rect.east = Math.PI;
+						return rect;
+					}
+					else if(pointInWindow(this._scene,canvas,180,-90)){
+						var rect = this._cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));
+						rect.south = -Math.PI/2;
+						rect.west = -Math.PI;
+						rect.east = Math.PI;
+						return rect;
+					}
 					return this._cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));
 				}
 			}
@@ -1123,10 +1151,10 @@ var Graticule = (function() {
 		}
 		return null;
 	}
-	function pointInWindow(scene,canvas){
+	function pointInWindow(scene,canvas,lon,lat){
 		//var canvas = this._scene.canvas;
 		//console.log(canvas);
-		var carto = Cesium.Cartographic.fromDegrees(180, 90);
+		var carto = Cesium.Cartographic.fromDegrees(lon, lat);
 		//console.log(carto);
 		var cartesian3 = Cesium.Ellipsoid.WGS84.cartographicToCartesian(carto);
 		//console.log(cartesian3);
@@ -1139,9 +1167,14 @@ var Graticule = (function() {
 		//console.log(leftdown);
 		var test1 = Cesium.pointInsideTriangle(cartesian2, leftup, rightup, rightdown);
 		var test2 = Cesium.pointInsideTriangle(cartesian2, leftup, leftdown, rightdown);
-		//console.log('upright triangle',test1);
-		//console.log('downleft triangle',test2);
-		if(test1===true||test2===true) return true;
+		
+		var camera = scene.camera ;
+		var occluder = new Cesium.EllipsoidalOccluder(Cesium.Ellipsoid.WGS84, camera.position);
+		var isvisible = occluder.isPointVisible(cartesian3);
+		console.log('isvisible',isvisible);
+		console.log('upright triangle',test1);
+		console.log('downleft triangle',test2);
+		if((test1===true||test2===true)&&isvisible===true) return true;
 		else return false;
 	}
     return _;
