@@ -1093,11 +1093,7 @@ var Graticule = (function() {
 			return Cesium.Rectangle.MAX_VALUE;
 		}
 		else{
-			if(false){
-<<<<<<< HEAD
-			//if(pointInWindow(this._scene,canvas,180,90)){//||pointInWindow(this._scene,canvas,180,-90)//暂时先不加南极点检测，而且北极点检测会影响南半球的经纬网显示
-=======
->>>>>>> a52fa0ea049fdaa61b4eb44f7773447db3d18a96
+/* 			if(false){
 				if((!isCartesian3(corners[0])&&isCartesian3(corners[2]))||(!isCartesian3(corners[1])&&isCartesian3(corners[3]))){	
 					var y1 = leftup.y;
 					var y2 = leftdown.y;
@@ -1142,8 +1138,8 @@ var Graticule = (function() {
 					return rect;
 					//return this._cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));
 				}
-			}
-			else{
+			} */
+			//else{
 				if((!isCartesian3(corners[0])&&isCartesian3(corners[2]))||(!isCartesian3(corners[1])&&isCartesian3(corners[3]))){	
 					var y1 = leftup.y;
 					var y2 = leftdown.y;
@@ -1197,6 +1193,7 @@ var Graticule = (function() {
 						rect.north = Math.PI/2;
 						rect.west = -Math.PI;
 						rect.east = Math.PI;
+						//console.log('northpole');
 						return rect;
 					}
 					else if(pointInWindow(this._scene,canvas,180,-90)){
@@ -1204,11 +1201,12 @@ var Graticule = (function() {
 						rect.south = -Math.PI/2;
 						rect.west = -Math.PI;
 						rect.east = Math.PI;
+						//console.log('southpole');
 						return rect;
 					}
 					return this._cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));
 				}
-			}
+			
 		}
 		
         return Cesium.Rectangle.MAX_VALUE;
@@ -1330,28 +1328,27 @@ var Graticule = (function() {
 		return null;
 	}
 	function pointInWindow(scene,canvas,lon,lat){
-		//var canvas = this._scene.canvas;
-		//console.log(canvas);
 		var carto = Cesium.Cartographic.fromDegrees(lon, lat);
-		//console.log(carto);
+		//判断point是否在窗口所面对的这一半球
 		var cartesian3 = Cesium.Ellipsoid.WGS84.cartographicToCartesian(carto);
-		//console.log(cartesian3);
+		if(cartesian3){
+			var camera = scene.camera ;
+			var occluder = new Cesium.EllipsoidalOccluder(Cesium.Ellipsoid.WGS84, camera.position);
+			var isvisible = occluder.isPointVisible(cartesian3);
+		}
+		//判断point是否在窗口内
 		var cartesian2 = Cesium.SceneTransforms.wgs84ToWindowCoordinates(scene, cartesian3);
-		//console.log(cartesian2);
-		var leftup = new Cesium.Cartesian2(0, 0);
-		var rightdown = new Cesium.Cartesian2(canvas.width, canvas.height);
-		var rightup = new Cesium.Cartesian2(canvas.width,0);
-		var leftdown = new Cesium.Cartesian2(0, canvas.height);
-		//console.log(leftdown);
-		var test1 = Cesium.pointInsideTriangle(cartesian2, leftup, rightup, rightdown);
-		var test2 = Cesium.pointInsideTriangle(cartesian2, leftup, leftdown, rightdown);
-		
-		var camera = scene.camera ;
-		var occluder = new Cesium.EllipsoidalOccluder(Cesium.Ellipsoid.WGS84, camera.position);
-		var isvisible = occluder.isPointVisible(cartesian3);
-		console.log('isvisible',isvisible);
-		console.log('upright triangle',test1);
-		console.log('downleft triangle',test2);
+		if(cartesian2){
+			var leftup = new Cesium.Cartesian2(0, 0);
+			var rightdown = new Cesium.Cartesian2(canvas.width, canvas.height);
+			var rightup = new Cesium.Cartesian2(canvas.width,0);
+			var leftdown = new Cesium.Cartesian2(0, canvas.height);
+			var test1 = Cesium.pointInsideTriangle(cartesian2, leftup, rightup, rightdown);
+			var test2 = Cesium.pointInsideTriangle(cartesian2, leftup, leftdown, rightdown);
+		}
+		//console.log('isvisible',isvisible);
+		//console.log('upright triangle',test1);
+		//console.log('downleft triangle',test2);
 		if((test1===true||test2===true)&&isvisible===true) return true;
 		else return false;
 	}
