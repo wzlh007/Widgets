@@ -1094,7 +1094,10 @@ var Graticule = (function() {
 		}
 		else{
 			if(false){
+<<<<<<< HEAD
 			//if(pointInWindow(this._scene,canvas,180,90)){//||pointInWindow(this._scene,canvas,180,-90)//暂时先不加南极点检测，而且北极点检测会影响南半球的经纬网显示
+=======
+>>>>>>> a52fa0ea049fdaa61b4eb44f7773447db3d18a96
 				if((!isCartesian3(corners[0])&&isCartesian3(corners[2]))||(!isCartesian3(corners[1])&&isCartesian3(corners[3]))){	
 					var y1 = leftup.y;
 					var y2 = leftdown.y;
@@ -1169,12 +1172,40 @@ var Graticule = (function() {
 						center = camera.pickEllipsoid({x:(rightup.x+leftup.x)/2, y:y1}, this._ellipsoid);	
 					}
 					corners.push(center);
+					if(pointInWindow(this._scene,canvas,180,90)){
+						var rect = this._cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));
+						rect.north = Math.PI/2;
+						rect.west = -Math.PI;
+						rect.east = Math.PI;
+						return rect;
+					}
+					else if(pointInWindow(this._scene,canvas,180,-90)){
+						var rect = this._cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));
+						rect.south = -Math.PI/2;
+						rect.west = -Math.PI;
+						rect.east = Math.PI;
+						return rect;
+					}
 					return this._cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));
 				}
 				else if(isCartesian3(corners[0])&&isCartesian3(corners[1])&&isCartesian3(corners[2])&&isCartesian3(corners[3])){
 					var center = camera.pickEllipsoid({x:(rightup.x+leftup.x)/2, y:leftup.y}, this._ellipsoid);
 					//console.log('center',center);
 					corners.push(center);
+					if(pointInWindow(this._scene,canvas,180,90)){
+						var rect = this._cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));
+						rect.north = Math.PI/2;
+						rect.west = -Math.PI;
+						rect.east = Math.PI;
+						return rect;
+					}
+					else if(pointInWindow(this._scene,canvas,180,-90)){
+						var rect = this._cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));
+						rect.south = -Math.PI/2;
+						rect.west = -Math.PI;
+						rect.east = Math.PI;
+						return rect;
+					}
 					return this._cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));
 				}
 			}
@@ -1314,9 +1345,14 @@ var Graticule = (function() {
 		//console.log(leftdown);
 		var test1 = Cesium.pointInsideTriangle(cartesian2, leftup, rightup, rightdown);
 		var test2 = Cesium.pointInsideTriangle(cartesian2, leftup, leftdown, rightdown);
-		//console.log('upright triangle',test1);
-		//console.log('downleft triangle',test2);
-		if(test1===true||test2===true) return true;
+		
+		var camera = scene.camera ;
+		var occluder = new Cesium.EllipsoidalOccluder(Cesium.Ellipsoid.WGS84, camera.position);
+		var isvisible = occluder.isPointVisible(cartesian3);
+		console.log('isvisible',isvisible);
+		console.log('upright triangle',test1);
+		console.log('downleft triangle',test2);
+		if((test1===true||test2===true)&&isvisible===true) return true;
 		else return false;
 	}
 	
