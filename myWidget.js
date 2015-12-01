@@ -52,7 +52,8 @@ function myWidget(viewer,scene,ellipsoid)
 				var cameraheight0 = this.getcamera().carto.height;
 				this.zoomRate = cameraheight0/10;
 				//var cameraheight = cameraheight0.toFixed(0);
-				if(Cesium.defined(position)){
+				//if(this.viewer.camera._mode === Cesium.SceneMode.COLUMBUS_VIEW) document.getElementById("height").innerHTML="";
+				if(this.viewer.camera._mode === Cesium.SceneMode.SCENE3D&&Cesium.defined(position)){
 					var positionCartographic = ellipsoid.cartesianToCartographic(position);
 					var positions =[positionCartographic];
 					var promise = Cesium.sampleTerrain(terrainProvider, 9, positions);  
@@ -68,6 +69,7 @@ function myWidget(viewer,scene,ellipsoid)
 						  document.getElementById("height").innerHTML="	\t海拔: 未定义";
 					  });
 				}
+				else document.getElementById("height").innerHTML="";
 				document.getElementById("long").innerHTML="经度: "+longitudeString;
 				document.getElementById("lat").innerHTML="    \t纬度: "+latitudeString;
 				if(cameraheight0>1000)
@@ -775,7 +777,7 @@ var Graticule = (function() {
 			var lat, lng, granularity = Cesium.Math.toRadians(1);
 			
 			//画经线
-			var latitudeText = minLat + Math.floor((maxLat - minLat) / dLat / 2) * dLat;
+			var latitudeText = minLat + Math.floor((maxLat - minLat) / dLat / 2) * dLat+dLat/2;
 			for(lng = minLng; lng < Cesium.Math.toRadians(180); lng += dLng) {
 				// draw meridian
 				var path = [];
@@ -807,7 +809,7 @@ var Graticule = (function() {
 				if(!(around(degLng,0,0.01)||around(degLng,180,0.01)||around(degLng,-180,0.01))) this.makeLabel(lng, latitudeText, this._sexagesimal ? this._decToSex(degLng) : degreeToText(degLng,dLng,'lon'), false);
 			}
 			//画纬线
-			var longitudeText = minLng + Math.floor((Math.PI*2+(maxLng - minLng)) / dLng / 2) * dLng;
+			var longitudeText = minLng + Math.floor((Math.PI*2+(maxLng - minLng)) / dLng / 2) * dLng+dLng/2;
 			var longitudeText = longitudeText<Math.PI ? longitudeText : (-Math.PI+longitudeText-Math.PI);
 			for(lat = minLat; lat < maxLat; lat += dLat) {
 				// draw parallels
@@ -856,7 +858,7 @@ var Graticule = (function() {
 				this._specLines.add({
 					positions : ellipsoid.cartographicArrayToCartesianArray(path),
 					material : material1,
-					width: 2,
+					width: 1,
 				});
 				path = [];
 				for(lng = Cesium.Math.toRadians(-180); lng < maxLng; lng += granularity) {
@@ -866,7 +868,7 @@ var Graticule = (function() {
 				this._specLines.add({
 					positions : ellipsoid.cartographicArrayToCartesianArray(path),
 					material : material2,
-					width: 2
+					width: 1
 				});
 				this.makeLabel4Spec(longitudeText+dLng, Cesium.Math.toRadians(specLines[i]), i, true);
 			}
@@ -885,7 +887,7 @@ var Graticule = (function() {
 				this._specLines2.add({
 					positions : ellipsoid.cartographicArrayToCartesianArray(path),
 					material : material2,
-					width: 2
+					width: 1
 				});
 				this.makeLabel4Spec(Cesium.Math.toRadians(specLines2[i]),latitudeText, i, false);
 			}
@@ -911,7 +913,7 @@ var Graticule = (function() {
 			var lat, lng, granularity = Cesium.Math.toRadians(1);
 
 			// labels positions
-			var latitudeText = minLat + Math.floor((maxLat - minLat) / dLat / 2) * dLat;
+			var latitudeText = minLat + Math.floor((maxLat - minLat) / dLat / 2) * dLat+dLat/2;
 			for(lng = minLng; lng < maxLng; lng += dLng) {
 				// draw meridian
 				var path = [];
@@ -928,7 +930,7 @@ var Graticule = (function() {
 			}
 			
 			// lats
-			var longitudeText = minLng + Math.floor((maxLng - minLng) / dLng / 2) * dLng;
+			var longitudeText = minLng + Math.floor((maxLng - minLng) / dLng / 2) * dLng+dLng/2;
 			for(lat = minLat; lat < maxLat; lat += dLat) {
 				// draw parallels
 				var path = [];
@@ -960,7 +962,7 @@ var Graticule = (function() {
 				this._specLines.add({
 					positions : ellipsoid.cartographicArrayToCartesianArray(path),
 					material : material,
-					width: 2
+					width: 1
 				});
 				this.makeLabel4Spec((minLng+maxLng)/2-granularity, Cesium.Math.toRadians(specLines[i]), i, true);
 			}
@@ -979,7 +981,7 @@ var Graticule = (function() {
 				this._specLines2.add({
 					positions : ellipsoid.cartographicArrayToCartesianArray(path),
 					material : material2,
-					width: 2
+					width: 1
 				});
 				this.makeLabel4Spec(Cesium.Math.toRadians(specLines2[i]),latitudeText, i, false);
 			}
@@ -995,7 +997,7 @@ var Graticule = (function() {
 		var minLng = -Math.PI;
 		var maxLng = Math.PI;
 		// labels positions
-		var latitudeText = minLat + Math.floor((maxLat - minLat) / dLat / 2) * dLat;
+		var latitudeText = minLat + Math.floor((maxLat - minLat) / dLat / 2) * dLat+dLat/2;
 		for(lng = minLng; lng < maxLng; lng += dLng) {
 			// draw meridian
 			var path = [];
@@ -1012,7 +1014,7 @@ var Graticule = (function() {
 		}
 		
 		// lats
-		var longitudeText = minLng + Math.floor((maxLng - minLng) / dLng / 2) * dLng;
+		var longitudeText = minLng + Math.floor((maxLng - minLng) / dLng / 2) * dLng+dLng/2;
 		for(lat = minLat; lat < maxLat; lat += dLat) {
 			// draw parallels
 			var path = [];
@@ -1182,7 +1184,10 @@ var Graticule = (function() {
 						rect.east = Math.PI;
 						return rect;
 					}
-					return this._cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));
+					if(Array.isArray(corners) && corners.length>3){
+						var rect = this._cartoToRect(this._ellipsoid.cartesianArrayToCartographicArray(corners));
+						if(rect) return rect;
+					}
 				}
 				else if(isCartesian3(corners[0])&&isCartesian3(corners[1])&&isCartesian3(corners[2])&&isCartesian3(corners[3])){
 					var center = camera.pickEllipsoid({x:(rightup.x+leftup.x)/2, y:leftup.y}, this._ellipsoid);
@@ -1306,7 +1311,7 @@ var Graticule = (function() {
 				return Cesium.Rectangle.fromCartographicArray(cartoArray);
 			}	
 		}
-		return null;
+		return false;
 	}
 	
 	function arrayIsInBack(cartoArray){
